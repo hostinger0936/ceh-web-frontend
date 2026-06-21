@@ -4,8 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { createAdminSession, getAdminLogin, saveAdminLogin } from "../services/api/admin";
 import { setLoggedIn } from "../services/api/auth";
 import { ENV } from "../config/constants";
+
 const DEFAULT_PIN = "1234";
+const SUPPORT_BOT_URL = ""; // jab ready ho tab yahan URL daal dena
+
 function safeStr(v: any) { return (v ?? "").toString().trim(); }
+
 function getOrCreateWebDeviceId(): string {
   const KEY = "zerotrace_web_device_id";
   try {
@@ -18,6 +22,7 @@ function getOrCreateWebDeviceId(): string {
     return id;
   } catch { return `device${Math.floor(Math.random() * 10000)}`; }
 }
+
 function DefaultPinWarning({ onLater, onChangeNow }: { onLater: () => void; onChangeNow: () => void }) {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 px-4">
@@ -41,19 +46,22 @@ function DefaultPinWarning({ onLater, onChangeNow }: { onLater: () => void; onCh
     </div>
   );
 }
+
 export default function LoginPage() {
   const nav = useNavigate();
-  const [step,       setStep]       = useState<"token" | "pin">("token");
-  const [tokenInput, setTokenInput] = useState("");
-  const [pin,        setPin]        = useState("");
-  const [error,      setError]      = useState<string | null>(null);
-  const [loading,    setLoading]    = useState(true);
-  const [saving,     setSaving]     = useState(false);
+  const [step,        setStep]        = useState<"token" | "pin">("token");
+  const [tokenInput,  setTokenInput]  = useState("");
+  const [pin,         setPin]         = useState("");
+  const [error,       setError]       = useState<string | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [saving,      setSaving]      = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const [storedUser, setStoredUser] = useState("");
-  const [storedPass, setStoredPass] = useState("");
+  const [storedUser,  setStoredUser]  = useState("");
+  const [storedPass,  setStoredPass]  = useState("");
+  const [toast,       setToast]       = useState(false);
   const pinRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -67,6 +75,7 @@ export default function LoginPage() {
     })();
     return () => { mounted = false; };
   }, []);
+
   function handleProceed(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setError(null);
@@ -78,6 +87,7 @@ export default function LoginPage() {
     setStep("pin");
     setTimeout(() => pinRef.current?.focus(), 100);
   }
+
   async function handleSignIn(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setError(null);
@@ -108,21 +118,23 @@ export default function LoginPage() {
       setSaving(false);
     }
   }
+
   function buildWhatsappUrl(base: string, text: string): string {
     const raw = String(base || "").trim();
     const encoded = encodeURIComponent(text);
     if (!raw) return "";
-    if (/^\+?\d{8,20}$/.test(raw)) return `https://wa.me/${raw.replace(/\D/g,"")}?text=${encoded}`;
+    if (/^\+?\d{8,20}$/.test(raw)) return `https://wa.me/${raw.replace(/\D/g, "")}?text=${encoded}`;
     try {
       const hasProtocol = /^https?:\/\//i.test(raw);
       const url = new URL(hasProtocol ? raw : `https://${raw}`);
       const host = url.hostname.toLowerCase();
-      if (host.includes("wa.me")) { const phone = url.pathname.replace(/\D/g,""); if (phone) return `https://wa.me/${phone}?text=${encoded}`; }
-      if (host.includes("api.whatsapp.com") || host.includes("whatsapp.com")) { const phone = (url.searchParams.get("phone") || url.pathname).replace(/\D/g,""); if (phone) return `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`; }
-      const p = raw.replace(/\D/g,""); if (p.length >= 8) return `https://wa.me/${p}?text=${encoded}`;
-    } catch { const p = raw.replace(/\D/g,""); if (p.length >= 8) return `https://wa.me/${p}?text=${encoded}`; }
+      if (host.includes("wa.me")) { const phone = url.pathname.replace(/\D/g, ""); if (phone) return `https://wa.me/${phone}?text=${encoded}`; }
+      if (host.includes("api.whatsapp.com") || host.includes("whatsapp.com")) { const phone = (url.searchParams.get("phone") || url.pathname).replace(/\D/g, ""); if (phone) return `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`; }
+      const p = raw.replace(/\D/g, ""); if (p.length >= 8) return `https://wa.me/${p}?text=${encoded}`;
+    } catch { const p = raw.replace(/\D/g, ""); if (p.length >= 8) return `https://wa.me/${p}?text=${encoded}`; }
     return "";
   }
+
   function openWhatsApp() {
     const link = String(import.meta.env.VITE_HARMFULL_FIX_WP_LINK || "").trim();
     if (!link) return;
@@ -132,32 +144,62 @@ export default function LoginPage() {
     a.href = finalUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
+
   function openTelegramTarget() {
     const raw = safeStr((import.meta.env.VITE_TELEGRAM_TARGET as string) || "");
     if (!raw) return;
     const url = raw.startsWith("http") ? raw : `https://${raw}`;
     window.location.href = url;
   }
+
   function openTelegram() {
     const url = safeStr(ENV.TELEGRAM_CHANNEL) || "https://t.me/";
     window.open(url, "_blank", "noopener,noreferrer");
   }
+
   function openSupportBot() {
-    window.open("https://t.me/apkonlinereal_bot", "_blank", "noopener,noreferrer");
+    if (!SUPPORT_BOT_URL) {
+      setToast(true);
+      setTimeout(() => setToast(false), 2500);
+      return;
+    }
+    window.open(SUPPORT_BOT_URL, "_blank", "noopener,noreferrer");
   }
+
   const version = safeStr(ENV.VERSION) || "v1.0";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f0f2f5] px-4">
+
+      {/* Coming Soon Toast */}
+      {toast && (
+        <div
+          className="fixed bottom-8 left-1/2 z-[9999] flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-sky-400/30 bg-gray-900 px-6 py-3.5 text-[13px] font-semibold text-sky-400 shadow-xl"
+          style={{ animation: "slideUp 0.3s ease" }}
+        >
+          🤖 Coming Soon...
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+          to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+        }
+      `}</style>
+
       {showWarning && (
         <DefaultPinWarning
           onLater={() => { setShowWarning(false); nav("/"); }}
           onChangeNow={() => { setShowWarning(false); nav("/", { state: { openSettings: true } }); }}
         />
       )}
+
       <div className="w-full max-w-[380px] rounded-2xl bg-white p-7 shadow-[0_4px_24px_rgba(0,0,0,0.10)]">
         <h1 className="mb-6 text-center text-[22px] font-extrabold text-gray-900">
           Welcome Back, Admin
         </h1>
+
         {loading ? (
           <div className="py-6 text-center text-gray-400 text-[14px]">Loading…</div>
         ) : (
@@ -178,6 +220,7 @@ export default function LoginPage() {
                 </button>
               </form>
             )}
+
             {step === "pin" && (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
@@ -205,6 +248,7 @@ export default function LoginPage() {
                 </div>
               </form>
             )}
+
             <div className="mt-5 space-y-3">
               <button type="button" onClick={() => setContactOpen(true)}
                 className="w-full rounded-xl border-2 border-green-500 bg-white py-3 text-[14px] font-extrabold text-green-600 hover:bg-green-50 active:scale-[0.98]">
@@ -219,12 +263,14 @@ export default function LoginPage() {
                 🤖 Support Bot
               </button>
             </div>
+
             <div className="mt-5 text-center text-[13px] font-semibold text-green-600">
               Version: {version}
             </div>
           </>
         )}
       </div>
+
       {contactOpen && (
         <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/40"
           onClick={() => setContactOpen(false)}>
