@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Simple theme vars (adjust as needed) */
+:root{
+  --brand: #0ea5a4; /* teal */
+  --muted: #64748b;
+}
+
+/* full height layout helpers */
+html, body, #root { height: 100%; }
+
+/* global styles */
+body {
+  @apply bg-gray-50 text-slate-800 antialiased;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* simple utility tweaks */
+a { @apply text-slate-700 hover:underline; }
+button { @apply rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500; }
+
+/* small container */
+.container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
