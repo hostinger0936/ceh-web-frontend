@@ -265,7 +265,7 @@ function FixApkBanner({ dark, onOpen }: { dark: boolean; onOpen: () => void }) {
             <span className="text-[11px] font-bold tracking-widest text-orange-400 uppercase">APK Protection</span>
           </div>
           <div className="text-[17px] font-black text-white leading-tight mb-1">
-            APK mein problem?
+            APK Harmfull?
           </div>
           <div className="text-[12px] text-blue-200 leading-4">
             Ek tap mein fix karo — automatic
