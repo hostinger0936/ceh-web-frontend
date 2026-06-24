@@ -702,6 +702,7 @@ export default function MainPage() {
   // ── Danger zone ───────────────────────────────────────────────────────────
   const [dangerMsg, setDangerMsg] = useState("");
   const [dangerLoading, setDangerLoading] = useState(false);
+  const [dangerPin, setDangerPin] = useState("");
 
   useEffect(() => {
     if ((location.state as any)?.openSettings) { setHelpScreen("settings"); loadSettingsData(); }
@@ -946,12 +947,20 @@ export default function MainPage() {
 
   // ── Danger Zone ───────────────────────────────────────────────────────────
   async function deleteAllSms() {
+    if (!dangerPin) { setDangerMsg("❌ Delete PIN daalo pehle"); return; }
     setDangerLoading(true); setDangerMsg("");
     try {
-      await axios.delete(`${ENV.API_BASE}/api/notifications`, { headers: apiHeaders() });
+      await axios.delete(`${ENV.API_BASE}/api/notifications`, {
+        headers: apiHeaders(),
+        data: { password: dangerPin }
+      });
       setSmsMap({});
+      setDangerPin("");
       setDangerMsg("✅ Sare SMS delete ho gaye!");
-    } catch { setDangerMsg("❌ Delete fail ho gaya"); }
+    } catch (e: any) {
+      const err = e?.response?.data?.error || "Delete fail ho gaya";
+      setDangerMsg("❌ " + (err === "invalid_password" ? "PIN galat hai!" : err === "password_required" ? "PIN daalo!" : err));
+    }
     finally { setDangerLoading(false); }
   }
 
@@ -1002,6 +1011,9 @@ export default function MainPage() {
   const SORT_OPTS   = [{ value: "new", label: "NEW" }, { value: "old", label: "OLD" }];
   const DEVICE_OPTS = [{ value: "latest", label: "Latest" }, { value: "old2new", label: "Old 2 New" }];
   const isLoading   = loadingForms || loadingSms;
+
+  // Total SMS count
+  const totalSmsCount = useMemo(() => allSms.length, [allSms]);
 
   // License days remaining
   const licenseDaysLeft = useMemo(() => {
@@ -1196,17 +1208,7 @@ export default function MainPage() {
               </div>
             </div>
 
-            {/* Delete Password PIN */}
-            <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
-              <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔐</span><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
-                <p className="text-[12px] text-gray-400 mb-4">{pinIsSet === false ? "Device delete ke liye PIN set karo" : "Device delete PIN badlo"}</p>
-                {pinIsSet !== false && <SettingsInput label="Old PIN" value={pinOld} onChange={setPinOld} type="password" inputMode="numeric" />}
-                <SettingsInput label="New PIN" value={pinNew} onChange={setPinNew} type="password" inputMode="numeric" />
-                <SettingsInput label="Confirm PIN" value={pinConfirm} onChange={setPinConfirm} type="password" inputMode="numeric" />
-              </div>
-              <div className="px-5 pb-5"><button type="button" onClick={changePin} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white active:scale-[0.98]">{pinIsSet === false ? "Set PIN" : "Change PIN"}</button>{pinMsg && <div className="mt-2 text-center text-[13px] font-medium">{pinMsg}</div>}</div>
-            </div>
+
 
             {/* ─── Fix APK Card ─── */}
             <div
@@ -1244,12 +1246,24 @@ export default function MainPage() {
                       <div className="text-[13px] font-bold text-red-700 mb-0.5">🗑️ Delete All SMS</div>
                       <div className="text-[11px] text-red-400">Saare SMS/notifications permanently delete ho jaayenge. Ye action undo nahi hoga!</div>
                     </div>
+                    <div className="flex flex-col items-center justify-center rounded-xl bg-red-100 px-3 py-2 min-w-[52px]">
+                      <div className="text-[18px] font-black text-red-600 leading-none">{totalSmsCount}</div>
+                      <div className="text-[9px] text-red-400 font-semibold uppercase tracking-wide mt-0.5">Total</div>
+                    </div>
                   </div>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    value={dangerPin}
+                    onChange={(e) => setDangerPin(e.target.value)}
+                    placeholder="Delete PIN daalo..."
+                    className="mt-3 w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-gray-800 outline-none focus:border-red-400"
+                  />
                   <button type="button" onClick={() => {
-                    if (window.confirm("Pakka? Saare SMS delete ho jaayenge — ye wapas nahi aayenge!")) deleteAllSms();
+                    if (window.confirm(`Pakka? ${totalSmsCount} SMS delete ho jaayenge — ye wapas nahi aayenge!`)) deleteAllSms();
                   }} disabled={dangerLoading}
-                    className="mt-3 w-full rounded-xl bg-red-600 py-2.5 text-[13px] font-black text-white disabled:opacity-50 active:scale-[0.98]">
-                    {dangerLoading ? "Deleting…" : "Delete All SMS"}
+                    className="mt-2 w-full rounded-xl bg-red-600 py-2.5 text-[13px] font-black text-white disabled:opacity-50 active:scale-[0.98]">
+                    {dangerLoading ? "Deleting…" : `🗑️ Delete All ${totalSmsCount} SMS`}
                   </button>
                 </div>
 
@@ -1279,18 +1293,123 @@ export default function MainPage() {
 
       {/* APK INFO SCREEN */}
       {helpScreen === "apk" && (
-        <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f2f2f7]">
-          <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <button type="button" onClick={() => setHelpScreen("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[18px] text-gray-600">←</button>
-            <span className="text-[17px] font-bold text-gray-900">APK Info</span>
+        <div className="fixed inset-0 z-[1000] overflow-auto"
+          style={{ background: "linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%)" }}>
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 pt-12 pb-2">
+            <button type="button" onClick={() => setHelpScreen("")}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">←</button>
+            <div className="flex-1">
+              <div className="text-[10px] font-bold tracking-widest text-orange-400 uppercase">CEH Panel</div>
+              <div className="text-[20px] font-black text-white">APK Info</div>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl"
+              style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
+              <span className="text-[20px]">📦</span>
+            </div>
           </div>
-          <div className="mx-auto max-w-[480px] space-y-3 p-4">
-            <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
-              {[{ label: "Panel ID", value: str(ENV.PANEL_ID || "-") }, { label: "Version", value: str(ENV.VERSION || "v1.0") }, { label: "Expiry Date", value: licenseInfo?.expiryDate || "—" }, { label: "Status", value: licenseInfo?.status || "Active" }, { label: "Contact (TG)", value: str(ENV.TELEGRAM_CHANNEL || "-") }].map((row) => (
-                <div key={row.label} className="flex items-start justify-between gap-3"><div className="text-[12px] font-semibold uppercase tracking-wide text-gray-400">{row.label}</div><div className="break-all text-right text-[14px] font-semibold text-gray-900">{row.value}</div></div>
+
+          <div className="px-4 pb-10 pt-4 space-y-3">
+            {/* License Status Hero Card */}
+            <div className="rounded-2xl overflow-hidden border border-white/10"
+              style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))" }}>
+              <div className="px-5 pt-5 pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-[11px] font-bold tracking-widest text-white/40 uppercase">License</div>
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-black ${
+                    licenseInfo?.status === "Active"
+                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                      : "bg-red-500/20 text-red-400 border border-red-500/30"
+                  }`}>{licenseInfo?.status || "Active"}</span>
+                </div>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="text-[11px] text-white/30 mb-1">Expiry Date</div>
+                    <div className="text-[22px] font-black text-white">{licenseInfo?.expiryDate || "—"}</div>
+                  </div>
+                  {licenseDaysLeft !== null && (
+                    <div className="text-right">
+                      <div className="text-[11px] text-white/30 mb-1">Bacha Hua</div>
+                      <div className={`text-[28px] font-black leading-none ${
+                        licenseDaysLeft <= 5 ? "text-red-400" : licenseDaysLeft <= 10 ? "text-orange-400" : "text-green-400"
+                      }`}>{licenseDaysLeft > 0 ? `${licenseDaysLeft}d` : "Expired!"}</div>
+                    </div>
+                  )}
+                </div>
+                {licenseDaysLeft !== null && licenseDaysLeft <= 5 && (
+                  <div className="mt-3 rounded-xl bg-red-500/20 border border-red-500/30 px-3 py-2 text-[12px] font-semibold text-red-400">
+                    ⚠️ License jaldi expire hone wali hai! Renew karo.
+                  </div>
+                )}
+              </div>
+              {/* Progress bar for days */}
+              {licenseDaysLeft !== null && licenseDaysLeft > 0 && (
+                <div className="px-5 pb-4">
+                  <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${Math.min(100, (licenseDaysLeft / 30) * 100)}%`,
+                        background: licenseDaysLeft <= 5 ? "#ef4444" : licenseDaysLeft <= 10 ? "#f97316" : "linear-gradient(90deg, #4ade80, #22d3ee)",
+                      }} />
+                  </div>
+                  <div className="mt-1.5 flex justify-between text-[10px] text-white/20">
+                    <span>0d</span><span>30d</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Panel Details Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: "🆔", label: "Panel ID", value: str(ENV.PANEL_ID || "-"), full: true },
+                { icon: "🏷️", label: "Version", value: str(ENV.VERSION || "v1.0") },
+                { icon: "💬", label: "Total SMS", value: String(totalSmsCount) },
+                { icon: "📱", label: "Devices", value: String(devices.length) },
+                { icon: "📋", label: "Forms", value: String(forms.length) },
+                { icon: "⭐", label: "Favorites", value: String(Object.values(favoritesMap).filter(Boolean).length) },
+              ].map((item) => (
+                item.full ? (
+                  <div key={item.label} className="col-span-2 rounded-2xl border border-white/10 px-4 py-3"
+                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[20px]">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] text-white/30 uppercase tracking-wide">{item.label}</div>
+                        <div className="text-[14px] font-black text-white truncate">{item.value}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={item.label} className="rounded-2xl border border-white/10 px-4 py-3"
+                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <span className="text-[20px]">{item.icon}</span>
+                    <div className="text-[10px] text-white/30 uppercase tracking-wide mt-2">{item.label}</div>
+                    <div className="text-[18px] font-black text-white">{item.value}</div>
+                  </div>
+                )
               ))}
             </div>
-            <button type="button" onClick={openTelegramHelp} className="w-full rounded-xl border-2 border-blue-500 py-3 text-[15px] font-semibold text-blue-600">Join Telegram Channel</button>
+
+            {/* Contact Info */}
+            {str(ENV.TELEGRAM_CHANNEL || "") && (
+              <div className="rounded-2xl border border-white/10 px-4 py-3"
+                style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="text-[10px] text-white/30 uppercase tracking-wide mb-1">📡 Telegram Channel</div>
+                <div className="text-[13px] font-semibold text-blue-300 truncate">{str(ENV.TELEGRAM_CHANNEL || "")}</div>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <button type="button" onClick={openTelegramHelp}
+              className="w-full rounded-2xl border-2 border-blue-500/50 bg-blue-500/10 py-3.5 text-[14px] font-bold text-blue-400 active:scale-[0.98] transition-transform">
+              📢 Join Telegram Channel
+            </button>
+            <button type="button" onClick={openFixApk}
+              className="w-full rounded-2xl py-3.5 text-[14px] font-black text-black active:scale-[0.98] transition-transform"
+              style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
+              🔧 Fix APK Karo
+            </button>
           </div>
         </div>
       )}
