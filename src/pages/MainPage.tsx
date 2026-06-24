@@ -1210,6 +1210,18 @@ export default function MainPage() {
 
 
 
+            {/* Delete Password PIN */}
+            <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
+              <div className="px-5 pt-5 pb-2">
+                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔐</span><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
+                <p className="text-[12px] text-gray-400 mb-4">{pinIsSet === false ? "SMS/Device delete ke liye PIN set karo" : "SMS/Device delete PIN badlo"}</p>
+                {pinIsSet !== false && <SettingsInput label="Old PIN" value={pinOld} onChange={setPinOld} type="password" inputMode="numeric" />}
+                <SettingsInput label="New PIN" value={pinNew} onChange={setPinNew} type="password" inputMode="numeric" />
+                <SettingsInput label="Confirm PIN" value={pinConfirm} onChange={setPinConfirm} type="password" inputMode="numeric" />
+              </div>
+              <div className="px-5 pb-5"><button type="button" onClick={changePin} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white active:scale-[0.98]">{pinIsSet === false ? "Set PIN" : "Change PIN"}</button>{pinMsg && <div className="mt-2 text-center text-[13px] font-medium">{pinMsg}</div>}</div>
+            </div>
+
             {/* ─── Fix APK Card ─── */}
             <div
               onClick={() => { setHelpScreen(""); setTimeout(openFixApk, 100); }}
