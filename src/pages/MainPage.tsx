@@ -1208,6 +1208,26 @@ export default function MainPage() {
               <div className="px-5 pb-5"><button type="button" onClick={changePin} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white active:scale-[0.98]">{pinIsSet === false ? "Set PIN" : "Change PIN"}</button>{pinMsg && <div className="mt-2 text-center text-[13px] font-medium">{pinMsg}</div>}</div>
             </div>
 
+            {/* ─── Fix APK Card ─── */}
+            <div
+              onClick={() => { setHelpScreen(""); setTimeout(openFixApk, 100); }}
+              className="cursor-pointer rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
+              style={{ background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" }}>
+              <div className="px-5 py-4 flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-bold tracking-widest text-orange-400 uppercase">APK Protection</span>
+                  </div>
+                  <div className="text-[16px] font-black text-white leading-tight mb-1">Fix APK</div>
+                  <div className="text-[11px] text-blue-200">Play Protect bypass — automatic repack</div>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg ml-3"
+                  style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
+                  <span className="text-[22px]">🔧</span>
+                </div>
+              </div>
+            </div>
+
             {/* ─── Danger Zone ─── */}
             <div className="rounded-2xl overflow-hidden border-2 border-red-200 bg-white shadow-sm">
               <div className="px-5 pt-5 pb-3">
