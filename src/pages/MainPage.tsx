@@ -48,13 +48,23 @@ function getTs(m: any): number {
   return 0;
 }
 
+// Global ticker — ek hi interval sabke liye
+let _tickListeners: Set<() => void> = new Set();
+let _tickTimer: ReturnType<typeof setInterval> | null = null;
+function _addTickListener(fn: () => void) {
+  _tickListeners.add(fn);
+  if (!_tickTimer) _tickTimer = setInterval(() => _tickListeners.forEach(f => f()), 10000);
+  return () => {
+    _tickListeners.delete(fn);
+    if (_tickListeners.size === 0 && _tickTimer) { clearInterval(_tickTimer); _tickTimer = null; }
+  };
+}
+
 function TimeAgo({ ts, className = "" }: { ts: number; className?: string }) {
   const [text, setText] = useState(() => timeAgo(ts));
   useEffect(() => {
     const update = () => setText(timeAgo(ts));
-    update();
-    const t = setInterval(update, 1000);
-    return () => clearInterval(t);
+    return _addTickListener(update);
   }, [ts]);
   return <span className={className}>{text}</span>;
 }
@@ -581,8 +591,8 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
   const android = str(device.metadata?.androidVersion || "");
   const sim     = device.simInfo;
   const checkedAt = Number((device as any).checkedAt || 0);
-  const [, setTick] = useState(0);
-  useEffect(() => { const t = setInterval(() => setTick(n => n + 1), 1000); return () => clearInterval(t); }, []);
+  const [tick, setTick] = useState(0);
+  useEffect(() => _addTickListener(() => setTick(n => n + 1)), []);
   const isRecent = recentlyOnline || (checkedAt > 0 && (Date.now() - checkedAt) < 50 * 1000);
   const rows: { text: React.ReactNode }[] = [
     { text: (<div className="text-center text-[12px]"><span className={D.deviceMeta(dark)}>ID: </span><span className={`font-bold ${D.idGreen(dark)}`}>{did.slice(0, 16)}</span></div>) },
@@ -667,7 +677,7 @@ function SettingsInput({ label, hint, type = "text", value, onChange, inputMode,
   );
 }
 
-const SMS_PER_PAGE = 20;
+const SMS_PER_PAGE = 50;
 
 export default function MainPage() {
   const nav      = useNavigate();
@@ -773,7 +783,7 @@ export default function MainPage() {
   }, []);
 
   const loadGroupData = useCallback(async (formsList: AnyRecord[]) => {
-    const ids = [...new Set(formsList.map(getDeviceId).filter(Boolean))].slice(0, 30);
+    const ids = [...new Set(formsList.map(getDeviceId).filter(Boolean))].slice(0, 10);
     if (!ids.length) return;
     setLoadingGroups(true);
     try {
@@ -1006,7 +1016,22 @@ export default function MainPage() {
   const allDataItems = useMemo(() => { const allCards = Object.values(cardMap).flat().map((c) => ({ ...c, _dtype: "card" })); const allNets = Object.values(netMap).flat().map((n) => ({ ...n, _dtype: "net" })); return [...forms.map((f) => ({ ...f, _dtype: "form" })), ...allCards, ...allNets].sort((a, b) => sortByTime(a, b, sortMode)); }, [forms, cardMap, netMap, sortMode]);
   const groups = useMemo(() => { const map: Record<string, AnyRecord[]> = {}; for (const f of forms) { const did = getDeviceId(f); if (!did) continue; if (!map[did]) map[did] = []; map[did].push(f); } for (const [did, cards] of Object.entries(cardMap)) { if (!map[did]) map[did] = []; map[did].push(...(cards || [])); } for (const [did, nets] of Object.entries(netMap)) { if (!map[did]) map[did] = []; map[did].push(...(nets || [])); } return Object.entries(map).map(([did, items]) => ({ deviceId: did, items: items.sort((a, b) => getTs(b) - getTs(a)), latestTs: Math.max(...items.map(getTs).filter(Boolean)) })).sort((a, b) => sortByTime(a, b, sortMode)); }, [forms, cardMap, netMap, sortMode]);
   const sortedDevices = useMemo(() => { const order = deviceOrderRef.current; if (!order.length) { const getCheckedAt = (d: any) => Number(d?.checkedAt || 0); return [...devices].sort((a, b) => deviceSort === "latest" ? getCheckedAt(b) - getCheckedAt(a) : getCheckedAt(a) - getCheckedAt(b)); } const devMap = new Map(devices.map((d) => [str(d.deviceId), d])); const ordered: AnyRecord[] = []; for (const id of (deviceSort === "latest" ? order : [...order].reverse())) { const d = devMap.get(id); if (d) ordered.push(d); } for (const d of devices) { if (!order.includes(str(d.deviceId))) ordered.push(d); } return ordered; }, [devices, deviceSort]);
-  function filterQ<T extends AnyRecord>(list: T[]): T[] { if (!searchQ) return list; return list.filter((item) => JSON.stringify(item).toLowerCase().includes(searchQ)); }
+  function filterQ<T extends AnyRecord>(list: T[]): T[] {
+    if (!searchQ) return list;
+    return list.filter((item) => {
+      const vals = Object.values(item);
+      for (const v of vals) {
+        if (v && typeof v === "string" && v.toLowerCase().includes(searchQ)) return true;
+        if (v && typeof v === "object") {
+          const nested = Object.values(v as any);
+          for (const n of nested) {
+            if (n && typeof n === "string" && (n as string).toLowerCase().includes(searchQ)) return true;
+          }
+        }
+      }
+      return false;
+    });
+  }
 
   const SORT_OPTS   = [{ value: "new", label: "NEW" }, { value: "old", label: "OLD" }];
   const DEVICE_OPTS = [{ value: "latest", label: "Latest" }, { value: "old2new", label: "Old 2 New" }];
@@ -1043,7 +1068,7 @@ export default function MainPage() {
           <FixApkBanner dark={dark} onOpen={openFixApk} />
           {isLoading ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
             : filterQ(mixedFeed).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data yet.</div>
-            : <div className="space-y-3 px-3">{filterQ(mixedFeed).map((item, i) => item._type === "form" ? <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} /> : <SmsCard key={getId(item) || i} sms={item} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(item)]} deviceNumMap={deviceNumMap} />)}</div>}
+            : <div className="space-y-3 px-3">{filterQ(mixedFeed).slice(0, 100).map((item, i) => item._type === "form" ? <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} /> : <SmsCard key={getId(item) || i} sms={item} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(item)]} deviceNumMap={deviceNumMap} />)}</div>}
         </div>
       )}
 
@@ -1082,7 +1107,7 @@ export default function MainPage() {
           <div className="space-y-3 px-3">
             {loadingSms ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
               : filterQ(filteredSms).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No messages.</div>
-              : filterQ(filteredSms).map((m, i) => <SmsCard key={getId(m) || i} sms={m} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(m)]} deviceNumMap={deviceNumMap} />)}
+              : filterQ(filteredSms).slice(0, 100).map((m, i) => <SmsCard key={getId(m) || i} sms={m} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(m)]} deviceNumMap={deviceNumMap} />)}
           </div>
         </div>
       )}
