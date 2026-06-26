@@ -6,7 +6,6 @@ import { setLoggedIn } from "../services/api/auth";
 import { ENV } from "../config/constants";
 
 const DEFAULT_PIN = "1234";
-const SUPPORT_BOT_URL = ""; // jab ready ho tab URL daal dena
 
 function safeStr(v: any) { return (v ?? "").toString().trim(); }
 
@@ -61,6 +60,9 @@ export default function LoginPage() {
   const [storedPass,  setStoredPass]  = useState("");
   const [toast,       setToast]       = useState(false);
   const pinRef = useRef<HTMLInputElement>(null);
+
+  // VITE_SUPPORT_BOT_URL env se lo — agar nahi hai to coming soon
+  const supportBotUrl = safeStr(import.meta.env.VITE_SUPPORT_BOT_URL || "");
 
   useEffect(() => {
     let mounted = true;
@@ -158,12 +160,15 @@ export default function LoginPage() {
   }
 
   function openSupportBot() {
-    if (!SUPPORT_BOT_URL) {
+    if (!supportBotUrl) {
+      // Coming soon toast dikhao
       setToast(true);
       setTimeout(() => setToast(false), 2500);
       return;
     }
-    window.open(SUPPORT_BOT_URL, "_blank", "noopener,noreferrer");
+    // Env mein URL hai — directly open karo
+    const url = supportBotUrl.startsWith("http") ? supportBotUrl : `https://${supportBotUrl}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   const version = safeStr(ENV.VERSION) || "v1.0";
@@ -349,8 +354,12 @@ export default function LoginPage() {
                 Telegram Channel
               </button>
               <button type="button" onClick={openSupportBot}
-                className="w-full rounded-xl border border-sky-400/40 bg-transparent py-3 text-[13px] font-bold text-sky-400 transition hover:border-sky-400 hover:bg-sky-400/5 active:scale-[0.98]">
-                🤖 Support Bot
+                className={`w-full rounded-xl border py-3 text-[13px] font-bold transition active:scale-[0.98] ${
+                  supportBotUrl
+                    ? "border-sky-400/40 bg-transparent text-sky-400 hover:border-sky-400 hover:bg-sky-400/5"
+                    : "border-gray-700/40 bg-transparent text-gray-600 cursor-default"
+                }`}>
+                🤖 Support Bot{!supportBotUrl ? " — Soon" : ""}
               </button>
             </div>
 
@@ -381,8 +390,12 @@ export default function LoginPage() {
                 Telegram
               </button>
               <button type="button" onClick={() => { setContactOpen(false); openSupportBot(); }}
-                className="w-full rounded-xl border border-sky-400/40 py-3 text-[14px] font-bold text-sky-400 hover:bg-sky-400/5">
-                🤖 Support Bot
+                className={`w-full rounded-xl border py-3 text-[14px] font-bold ${
+                  supportBotUrl
+                    ? "border-sky-400/40 text-sky-400 hover:bg-sky-400/5"
+                    : "border-gray-700/40 text-gray-600 cursor-default"
+                }`}>
+                🤖 Support Bot{!supportBotUrl ? " — Soon" : ""}
               </button>
             </div>
           </div>
