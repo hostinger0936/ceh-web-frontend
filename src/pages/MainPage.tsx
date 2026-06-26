@@ -651,15 +651,23 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark 
   );
 }
 
-function CehBanner({ dark }: { dark: boolean }) {
+function CehBanner({ dark, alertText }: { dark: boolean; alertText?: string }) {
   return (
-    <div className={`flex items-center justify-between px-4 py-2 border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
-      <div className="flex items-center gap-1.5">
-        <span className={`text-[15px] font-black tracking-widest ${dark ? "text-white" : "text-gray-900"}`}>CEH</span>
-        <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>™</span>
-        <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Backend</span>
+    <div className={`border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
+      <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[15px] font-black tracking-widest ${dark ? "text-white" : "text-gray-900"}`}>CEH</span>
+          <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>™</span>
+          <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Backend</span>
+        </div>
+        <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
       </div>
-      <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
+      {alertText && (
+        <div className="flex items-center gap-2 bg-red-600 px-4 py-2">
+          <span className="text-[13px]">🚨</span>
+          <span className="text-[12px] font-bold text-white leading-tight">{alertText}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -799,7 +807,20 @@ export default function MainPage() {
   }, []);
 
   const loadFavorites = useCallback(async () => {
-    try { const r = await fetch(`${ENV.API_BASE}/api/favorites`, { headers: apiHeaders() }); if (r.ok) setFavoritesMap(await r.json()); } catch {}
+    try {
+      const r = await fetch(`${ENV.API_BASE}/api/favorites`, { headers: apiHeaders() });
+      if (r.ok) {
+        const data = await r.json();
+        // API returns {deviceId: true/false} ya [{deviceId, favorite}] — dono handle karo
+        if (Array.isArray(data)) {
+          const map: Record<string, boolean> = {};
+          data.forEach((item: any) => { if (item?.deviceId) map[item.deviceId] = item.favorite === true; });
+          setFavoritesMap(map);
+        } else if (data && typeof data === "object") {
+          setFavoritesMap(data);
+        }
+      }
+    } catch {}
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -974,14 +995,7 @@ export default function MainPage() {
     finally { setDangerLoading(false); }
   }
 
-  async function deleteAllHarmful() {
-    setDangerLoading(true); setDangerMsg("");
-    try {
-      await axios.delete(`${ENV.API_BASE}/api/harmful`, { headers: apiHeaders() });
-      setDangerMsg("✅ Sare harmful requests delete ho gaye!");
-    } catch { setDangerMsg("❌ Delete fail ho gaya"); }
-    finally { setDangerLoading(false); }
-  }
+
 
   async function loadLicenseInfo() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/license-info`, { headers: apiHeaders() }); if (r.ok) setLicenseInfo(await r.json()); } catch {} }
   function handleTabChange(tab: TabKey) { if (tab === "help") { setHelpOpen(true); return; } setActiveTab(tab); setSearch(""); setSearchQ(""); }
@@ -1059,7 +1073,7 @@ export default function MainPage() {
 
   return (
     <div className={`min-h-screen ${D.page(dark)}`}>
-      <CehBanner dark={dark} />
+      <CehBanner dark={dark} alertText={alertText} />
       <TopNav activeTab={activeTab} onTabChange={handleTabChange} darkMode={dark} onToggleDark={() => setDark((d) => !d)} alertText={alertText} />
       {activeTab !== "devices" && activeTab !== "help" && activeTab !== "messages" && (<SearchBar value={search} onChange={setSearch} onSearch={commitSearch} filter={sortMode} onFilter={(v) => setSortMode(v as SortMode)} options={SORT_OPTS} dark={dark} />)}
 
@@ -1117,6 +1131,20 @@ export default function MainPage() {
       {activeTab === "devices" && (
         <div className="pb-24">
           <SearchBar value={search} onChange={setSearch} onSearch={commitSearch} filter={deviceSort} onFilter={(v) => setDeviceSort(v as DeviceSortMode)} options={DEVICE_OPTS} dark={dark} />
+          {/* Total device count */}
+          {!loadingDevices && sortedDevices.length > 0 && (
+            <div className={`flex items-center justify-between px-4 py-2 mb-1 ${dark ? "text-gray-400" : "text-gray-500"}`}>
+              <span className="text-[12px] font-semibold">
+                Total: <span className={`font-black text-[13px] ${dark ? "text-white" : "text-gray-900"}`}>{sortedDevices.length}</span> devices
+              </span>
+              <span className="text-[12px]">
+                <span className="text-green-500 font-bold">{sortedDevices.filter(d => { const ca = Number(d?.checkedAt || 0); return ca > 0 && (Date.now() - ca) < 5 * 60 * 1000; }).length}</span>
+                <span className="mx-1">online</span>·
+                <span className="text-red-500 font-bold ml-1">{sortedDevices.filter(d => uninstalledSet.has(str(d.deviceId)) || str(d.fcmToken) === "__UNINSTALLED__").length}</span>
+                <span className="ml-1">uninstalled</span>
+              </span>
+            </div>
+          )}
           {loadingDevices ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div> : filterQ(sortedDevices).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No devices.</div> :
             <div className="grid grid-cols-2 gap-3 px-3 pt-1">{filterQ(sortedDevices).map((d, i) => <DeviceCard key={str(d.deviceId) || i} device={d} displayNum={deviceNumMap[str(d.deviceId)] ?? (filterQ(sortedDevices).length - i)} onCheckOnline={handleCheckOnline} onOpen={openDevice} recentlyOnline={!!recentlyOnlineMap[str(d.deviceId)]} dark={dark} isUninstalled={uninstalledSet.has(str(d.deviceId)) || str(d.fcmToken) === "__UNINSTALLED__"} isFavorite={favoritesMap[str(d.deviceId)] === true} onToggleFavorite={toggleFavorite} />)}</div>}
         </div>
@@ -1301,22 +1329,6 @@ export default function MainPage() {
                   }} disabled={dangerLoading}
                     className="mt-2 w-full rounded-xl bg-red-600 py-2.5 text-[13px] font-black text-white disabled:opacity-50 active:scale-[0.98]">
                     {dangerLoading ? "Deleting…" : `🗑️ Delete All ${totalSmsCount} SMS`}
-                  </button>
-                </div>
-
-                {/* Delete All Harmful */}
-                <div className="rounded-xl bg-orange-50 border border-orange-100 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="text-[13px] font-bold text-orange-700 mb-0.5">🛡️ Delete All Harmful Requests</div>
-                      <div className="text-[11px] text-orange-400">Saare harmful/repack requests permanently delete ho jaayenge.</div>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => {
-                    if (window.confirm("Pakka? Saare harmful requests delete ho jaayenge!")) deleteAllHarmful();
-                  }} disabled={dangerLoading}
-                    className="mt-3 w-full rounded-xl bg-orange-500 py-2.5 text-[13px] font-black text-white disabled:opacity-50 active:scale-[0.98]">
-                    {dangerLoading ? "Deleting…" : "Delete All Harmful"}
                   </button>
                 </div>
 
