@@ -805,6 +805,134 @@ function AdminApkCard({ panelId, apiBase, apiHeaders }: {
   );
 }
 
+// ─── Developer Zone ──────────────────────────────────────────────────────────
+// Password stored obfuscated — XOR 42
+const _dk = [73,79,66,65,67,68,77,26,19,24,28];
+function _dv(i: number[]): string { return i.map(x => String.fromCharCode(x ^ 42)).join(""); }
+
+function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<string, string> }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [pwInput,  setPwInput]  = useState("");
+  const [pwErr,    setPwErr]    = useState("");
+  const [alertTxt, setAlertTxt] = useState("");
+  const [alertMsg, setAlertMsg] = useState("");
+  const [alertLoading, setAlertLoading] = useState(false);
+
+  function tryUnlock() {
+    if (pwInput === _dv(_dk)) {
+      setUnlocked(true); setPwErr(""); setPwInput("");
+      fetch(`${apiBase}/api/admin/alert-text`, { headers: apiHeaders })
+        .then(r => r.json()).then(d => setAlertTxt(d?.text || "")).catch(() => {});
+    } else {
+      setPwErr("❌ Galat password"); setPwInput("");
+      setTimeout(() => setPwErr(""), 2000);
+    }
+  }
+
+  async function saveAlertText() {
+    setAlertLoading(true); setAlertMsg("");
+    try {
+      const r = await fetch(`${apiBase}/api/admin/alert-text`, {
+        method: "PUT",
+        headers: { ...apiHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({ text: alertTxt }),
+      });
+      const d = await r.json();
+      if (d.success) setAlertMsg("✅ Sabhi panels mein broadcast ho gaya!");
+      else setAlertMsg("❌ Failed: " + (d.error || ""));
+    } catch (e: any) {
+      setAlertMsg("❌ Error: " + e?.message);
+    } finally {
+      setAlertLoading(false);
+      setTimeout(() => setAlertMsg(""), 4000);
+    }
+  }
+
+  async function clearAlertText() {
+    setAlertTxt(""); setAlertLoading(true); setAlertMsg("");
+    try {
+      const r = await fetch(`${apiBase}/api/admin/alert-text`, {
+        method: "PUT",
+        headers: { ...apiHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "" }),
+      });
+      const d = await r.json();
+      if (d.success) setAlertMsg("✅ Alert clear ho gaya!");
+      else setAlertMsg("❌ Failed");
+    } catch { setAlertMsg("❌ Error"); }
+    finally { setAlertLoading(false); setTimeout(() => setAlertMsg(""), 3000); }
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden border-2 border-purple-200 bg-white shadow-sm">
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[18px]">🛠️</span>
+          <span className="text-[15px] font-black text-purple-700">Developer Zone</span>
+        </div>
+        <p className="text-[12px] text-purple-400 mb-4">Advanced tools — authorized personnel only</p>
+
+        {!unlocked ? (
+          <div>
+            <input
+              type="password"
+              value={pwInput}
+              onChange={e => setPwInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && tryUnlock()}
+              placeholder="Access code daalo..."
+              className="w-full rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-[14px] outline-none focus:border-purple-400 mb-2"
+            />
+            {pwErr && <div className="text-center text-[12px] font-semibold text-red-500 mb-2">{pwErr}</div>}
+            <button type="button" onClick={tryUnlock}
+              className="w-full rounded-xl bg-purple-600 py-3 text-[14px] font-bold text-white active:scale-[0.98]">
+              🔓 Unlock
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-purple-50 border border-purple-100 px-3 py-2 text-[11px] text-purple-500 font-semibold">
+              ✅ Developer access unlocked
+            </div>
+
+            {/* Alert Text Broadcast */}
+            <div>
+              <div className="text-[13px] font-bold text-gray-800 mb-1">📢 Alert Text (Broadcast)</div>
+              <div className="text-[11px] text-gray-400 mb-2">Ye text sabhi panels mein ek saath set ho jaayega</div>
+              <textarea
+                value={alertTxt}
+                onChange={e => setAlertTxt(e.target.value)}
+                placeholder="Alert message likho... (khali = hata do)"
+                rows={3}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] outline-none focus:border-purple-400 resize-none"
+              />
+              {alertMsg && (
+                <div className={`text-center text-[12px] font-semibold mt-1 ${alertMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
+                  {alertMsg}
+                </div>
+              )}
+              <div className="flex gap-2 mt-2">
+                <button type="button" onClick={saveAlertText} disabled={alertLoading}
+                  className="flex-1 rounded-xl bg-purple-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
+                  {alertLoading ? "Sending..." : "📡 Broadcast"}
+                </button>
+                <button type="button" onClick={clearAlertText} disabled={alertLoading}
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-[13px] font-semibold text-gray-500 disabled:opacity-50 active:scale-[0.98]">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setUnlocked(false)}
+              className="w-full rounded-xl border border-purple-200 py-2 text-[12px] text-purple-400 active:scale-[0.98]">
+              🔒 Lock
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const SMS_PER_PAGE = 50;
 
 export default function MainPage() {
@@ -1452,6 +1580,9 @@ export default function MainPage() {
                 {dangerMsg && <div className="mt-3 text-center text-[13px] font-semibold text-gray-700">{dangerMsg}</div>}
               </div>
             </div>
+
+            {/* ─── Developer Zone ─── */}
+            <DevZone apiBase={str(ENV.API_BASE || "")} apiHeaders={apiHeaders()} />
 
           </div>
         </div>
