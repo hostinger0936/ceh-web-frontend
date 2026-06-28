@@ -811,18 +811,30 @@ const _dk = [73,79,66,65,67,68,77,26,19,24,28];
 function _dv(i: number[]): string { return i.map(x => String.fromCharCode(x ^ 42)).join(""); }
 
 function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<string, string> }) {
-  const [unlocked, setUnlocked] = useState(false);
-  const [pwInput,  setPwInput]  = useState("");
-  const [pwErr,    setPwErr]    = useState("");
-  const [alertTxt, setAlertTxt] = useState("");
-  const [alertMsg, setAlertMsg] = useState("");
+  const [unlocked,     setUnlocked]     = useState(false);
+  const [pwInput,      setPwInput]      = useState("");
+  const [pwErr,        setPwErr]        = useState("");
+  const [alertTxt,     setAlertTxt]     = useState("");
+  const [alertHeader,  setAlertHeader]  = useState("");
+  const [alertMsg,     setAlertMsg]     = useState("");
   const [alertLoading, setAlertLoading] = useState(false);
 
   function tryUnlock() {
     if (pwInput === _dv(_dk)) {
       setUnlocked(true); setPwErr(""); setPwInput("");
       fetch(`${apiBase}/api/admin/alert-text`, { headers: apiHeaders })
-        .then(r => r.json()).then(d => setAlertTxt(d?.text || "")).catch(() => {});
+        .then(r => r.json())
+        .then(d => {
+          const full = d?.text || "";
+          if (full.includes("|")) {
+            const [h, ...rest] = full.split("|");
+            setAlertHeader(h.trim());
+            setAlertTxt(rest.join("|").trim());
+          } else {
+            setAlertHeader("");
+            setAlertTxt(full);
+          }
+        }).catch(() => {});
     } else {
       setPwErr("❌ Galat password"); setPwInput("");
       setTimeout(() => setPwErr(""), 2000);
@@ -831,11 +843,14 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
 
   async function saveAlertText() {
     setAlertLoading(true); setAlertMsg("");
+    const combined = alertHeader.trim()
+      ? `${alertHeader.trim()}|${alertTxt.trim()}`
+      : alertTxt.trim();
     try {
       const r = await fetch(`${apiBase}/api/admin/alert-text`, {
         method: "PUT",
         headers: { ...apiHeaders, "Content-Type": "application/json" },
-        body: JSON.stringify({ text: alertTxt }),
+        body: JSON.stringify({ text: combined }),
       });
       const d = await r.json();
       if (d.success) setAlertMsg("✅ Sabhi panels mein broadcast ho gaya!");
@@ -849,7 +864,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
   }
 
   async function clearAlertText() {
-    setAlertTxt(""); setAlertLoading(true); setAlertMsg("");
+    setAlertTxt(""); setAlertHeader(""); setAlertLoading(true); setAlertMsg("");
     try {
       const r = await fetch(`${apiBase}/api/admin/alert-text`, {
         method: "PUT",
@@ -898,13 +913,24 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
             <div>
               <div className="text-[13px] font-bold text-gray-800 mb-1">📢 Alert Text (Broadcast)</div>
               <div className="text-[11px] text-gray-400 mb-2">Ye text sabhi panels mein ek saath set ho jaayega</div>
+
+              {/* Header field */}
+              <input
+                value={alertHeader}
+                onChange={e => setAlertHeader(e.target.value)}
+                placeholder="Header (e.g. Security Update)"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-[13px] outline-none focus:border-purple-400 mb-2"
+              />
+
+              {/* Content field */}
               <textarea
                 value={alertTxt}
                 onChange={e => setAlertTxt(e.target.value)}
-                placeholder="Alert message likho... (khali = hata do)"
+                placeholder="Scrolling content likho... (khali = hata do)"
                 rows={3}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] outline-none focus:border-purple-400 resize-none"
               />
+
               {alertMsg && (
                 <div className={`text-center text-[12px] font-semibold mt-1 ${alertMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
                   {alertMsg}
