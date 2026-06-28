@@ -651,7 +651,7 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark 
   );
 }
 
-function CehBanner({ dark, alertText }: { dark: boolean; alertText?: string }) {
+function CehBanner({ dark }: { dark: boolean; alertText?: string }) {
   return (
     <div className={`border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
       <div className="flex items-center justify-between px-4 py-2">
@@ -662,12 +662,6 @@ function CehBanner({ dark, alertText }: { dark: boolean; alertText?: string }) {
         </div>
         <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
       </div>
-      {alertText && (
-        <div className="flex items-center gap-2 bg-red-600 px-4 py-2">
-          <span className="text-[13px]">🚨</span>
-          <span className="text-[12px] font-bold text-white leading-tight">{alertText}</span>
-        </div>
-      )}
     </div>
   );
 }
