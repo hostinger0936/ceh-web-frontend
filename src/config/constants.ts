@@ -1,7 +1,6 @@
 /**
  * config/constants.ts — FULL & FINAL
  */
-
 export const STORAGE_KEYS = {
   LOGGED_IN:        "zerotrace_admin_logged_in",
   USERNAME:         "zerotrace_admin_username",
@@ -19,8 +18,6 @@ export const ENV = {
   WHATSAPP_PHONE:   (import.meta.env.VITE_WHATSAPP_PHONE as string) || "",
   DEFAULT_COUNTRY:  (import.meta.env.VITE_DEFAULT_COUNTRY as string) || "91",
   LICENSE_EXPIRY:   (import.meta.env.VITE_LICENSE_EXPIRY as string) || "",
-
-  // ── New variables ──
   PANEL_ID:         (import.meta.env.VITE_PANEL_ID          as string) || "",
   WHATSAPP_TARGET:  (import.meta.env.VITE_WHATSAPP_TARGET   as string) || "",
   TELEGRAM_CHANNEL: (import.meta.env.VITE_TELEGRAM_CHANNEL  as string) || "",
@@ -29,7 +26,7 @@ export const ENV = {
 
 export function getApiKey(): string {
   const envKey = ENV.API_KEY || "";
-  if (envKey && envKey !== "changeme") return envKey;
+  if (envKey) return envKey; // ✅ FIX: changeme check hataya
   try { return localStorage.getItem(STORAGE_KEYS.API_KEY) || ""; } catch { return ""; }
 }
 
