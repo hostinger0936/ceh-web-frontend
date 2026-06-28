@@ -70,14 +70,14 @@ function createClient(): AxiosInstance {
         const code =
           data && (data.error || data.code) ? String(data.error || data.code) : "";
 
+        // ✅ FIX: Sirf session_expired pe logout karo
+        // "unauthorized" hataya — notifications 401 se logout nahi hoga
         const isSessionExpired =
           status === 401 &&
           (code === "session_expired" ||
-            code === "unauthorized" ||
             code === "unauthenticated");
 
         // ✅ FIX: Login page pe 401 intercept mat karo
-        // Login page pe wrong password → 401 aata hai → logout nahi karna
         const isLoginPage = (() => {
           try {
             const p = window.location.pathname || "";
