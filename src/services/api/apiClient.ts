@@ -8,26 +8,18 @@ function getOrCreateWebDeviceId(): string {
   try {
     const existing = localStorage.getItem(KEY);
     if (existing && existing.trim()) return existing.trim();
-
     const counterKey = "zerotrace_web_device_counter";
     const nRaw = localStorage.getItem(counterKey);
     const n = Math.max(1, Number(nRaw || "1") || 1);
     const id = `device${n}`;
-
     localStorage.setItem(KEY, id);
     localStorage.setItem(counterKey, String(n + 1));
-
     return id;
   } catch {
     return `device${Math.floor(Math.random() * 10000)}`;
   }
 }
 
-/**
- * Get sessionId from localStorage.
- * NOTE: Cannot import from admin.ts — would cause circular dependency.
- * (apiClient → admin → apiClient). Read directly from localStorage.
- */
 function getSessionId(): string {
   try {
     return localStorage.getItem("zerotrace_session_id") || "";
@@ -51,18 +43,14 @@ function createClient(): AxiosInstance {
       config.headers = config.headers || {};
       (config.headers as any)["x-api-key"] = key;
     }
-
     try {
       if (isLoggedIn()) {
         const admin = getLoggedInUser();
         const deviceId = getOrCreateWebDeviceId();
         const sessionId = getSessionId();
-
         config.headers = config.headers || {};
         (config.headers as any)["x-admin"] = admin;
         (config.headers as any)["x-device-id"] = deviceId;
-
-        // Send sessionId — backend validates THIS specific session
         if (sessionId) {
           (config.headers as any)["x-session-id"] = sessionId;
         }
@@ -70,7 +58,6 @@ function createClient(): AxiosInstance {
     } catch {
       // ignore
     }
-
     return config;
   });
 
@@ -89,18 +76,25 @@ function createClient(): AxiosInstance {
             code === "unauthorized" ||
             code === "unauthenticated");
 
-        if (isSessionExpired) {
+        // ✅ FIX: Login page pe 401 intercept mat karo
+        // Login page pe wrong password → 401 aata hai → logout nahi karna
+        const isLoginPage = (() => {
+          try {
+            const p = window.location.pathname || "";
+            return p.startsWith("/login");
+          } catch {
+            return false;
+          }
+        })();
+
+        if (isSessionExpired && !isLoginPage) {
           try {
             logout();
           } catch {
             // ignore
           }
-
           try {
-            const p = window.location.pathname || "";
-            if (!p.startsWith("/login")) {
-              window.location.href = "/login";
-            }
+            window.location.href = "/login";
           } catch {
             // ignore
           }
@@ -108,7 +102,6 @@ function createClient(): AxiosInstance {
       } catch {
         // ignore
       }
-
       return Promise.reject(err);
     },
   );
