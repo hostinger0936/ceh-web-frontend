@@ -1188,8 +1188,7 @@ export default function MainPage() {
   async function saveGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: globalEnabled ? globalPhone : "" }, { headers: apiHeaders() }); setGlobalMsg(globalEnabled ? "✅ Saved!" : "✅ Cleared!"); if (!globalEnabled) setGlobalPhone(""); } catch { setGlobalMsg("❌ Failed"); } finally { setGlobalLoading(false); } }
   async function changePin() { setPinMsg(""); if (pinIsSet === true && !pinOld) { setPinMsg("❌ Old PIN required"); return; } if (!pinNew) { setPinMsg("❌ New PIN required"); return; } if (pinNew !== pinConfirm) { setPinMsg("❌ PINs don't match"); return; } if (pinNew.length < 4) { setPinMsg("❌ Min 4 digits"); return; } try { const r = await axios.post(`${ENV.API_BASE}/api/admin/deletePassword/change`, { currentPassword: pinOld, newPassword: pinNew }, { headers: apiHeaders() }); if (r.data?.success) { setPinMsg("✅ PIN " + (pinIsSet ? "changed!" : "set!")); setPinOld(""); setPinNew(""); setPinConfirm(""); setPinIsSet(true); } else { setPinMsg("❌ " + (r.data?.error || "Failed")); } } catch (e: any) { setPinMsg("❌ " + (e?.response?.data?.error || "Failed")); } }
 
-  // ── Change Login Password ─────────────────────────────────────────────────
-  async function changeLoginPassword() {
+ async function changeLoginPassword() {
     setLoginPassMsg("");
     if (!loginPassOld) { setLoginPassMsg("❌ Purana password daalo"); return; }
     if (!loginPassNew) { setLoginPassMsg("❌ Naya password daalo"); return; }
@@ -1197,25 +1196,24 @@ export default function MainPage() {
     if (loginPassNew.length < 4) { setLoginPassMsg("❌ Min 4 characters chahiye"); return; }
     setLoginPassLoading(true);
     try {
-      // Get current login credentials to verify old password
-      const currentCreds = await fetch(`${ENV.API_BASE}/api/admin/login`, { headers: apiHeaders() });
-      const creds = await currentCreds.json();
-      if (creds.password !== loginPassOld) {
+      // Step 1: Server side verify karo purana password
+      const { verifyAdminLogin } = await import("../services/api/admin");
+      const storedUser = getLoggedInUser() || "admin";
+      const verify = await verifyAdminLogin(storedUser, loginPassOld);
+      if (!verify.success) {
         setLoginPassMsg("❌ Purana password galat hai");
         setLoginPassLoading(false);
         return;
       }
-      // Update with new password
+      // Step 2: Naya password save karo
       const r = await axios.put(`${ENV.API_BASE}/api/admin/login`,
-        { username: creds.username, password: loginPassNew },
+        { username: storedUser, password: loginPassNew },
         { headers: apiHeaders() }
       );
       if (r.data?.success) {
-        setLoginPassMsg("✅ Password change ho gaya! Ab sare sessions logout honge...");
+        setLoginPassMsg("✅ Password change ho gaya! Ab logout ho raha hai...");
         setLoginPassOld(""); setLoginPassNew(""); setLoginPassConfirm("");
-        // Delete all sessions
         await axios.delete(`${ENV.API_BASE}/api/admin/sessions`, { headers: apiHeaders() }).catch(() => {});
-        // Logout self
         setTimeout(() => { logout(); window.location.href = "/login"; }, 2000);
       } else {
         setLoginPassMsg("❌ " + (r.data?.error || "Failed"));
@@ -1223,7 +1221,6 @@ export default function MainPage() {
     } catch (e: any) { setLoginPassMsg("❌ " + (e?.response?.data?.error || "Failed")); }
     finally { setLoginPassLoading(false); }
   }
-
   // ── Danger Zone ───────────────────────────────────────────────────────────
   async function deleteAllSms() {
     if (!dangerPin) { setDangerMsg("❌ Delete PIN daalo pehle"); return; }
