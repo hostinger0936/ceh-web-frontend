@@ -7,28 +7,20 @@ import type { AdminSessionDoc } from "../../types";
 
 const SESSION_ID_KEY = "zerotrace_session_id";
 
-/** Generate a UUID v4 */
 function uuid(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
 }
 
-/**
- * Get or create session ID for this browser tab.
- * Stored in localStorage — shared across all tabs.
- * 1 browser = 1 sessionId. Different browser/device = different session.
- */
 export function getOrCreateSessionId(): string {
   try {
     const existing = localStorage.getItem(SESSION_ID_KEY);
     if (existing && existing.trim()) return existing.trim();
-
     const id = uuid();
     localStorage.setItem(SESSION_ID_KEY, id);
     return id;
@@ -37,7 +29,6 @@ export function getOrCreateSessionId(): string {
   }
 }
 
-/** Clear session ID (on logout) */
 export function clearSessionId(): void {
   try {
     localStorage.removeItem(SESSION_ID_KEY);
@@ -48,12 +39,32 @@ export function clearSessionId(): void {
    ADMIN LOGIN
    ═══════════════════════════════════════════ */
 
-export async function getAdminLogin(): Promise<{ username: string; password: string }> {
+// Sirf username return hoga — password nahi
+export async function getAdminLogin(): Promise<{ username: string }> {
   const res = await api.get(`/api/admin/login`);
   return {
     username: res.data?.username || "",
-    password: res.data?.password || "",
   };
+}
+
+// Server side verify — bcrypt + rate limiting
+export async function verifyAdminLogin(username: string, password: string): Promise<{
+  success: boolean;
+  firstLogin?: boolean;
+  error?: string;
+}> {
+  try {
+    const res = await api.post(`/api/admin/login/verify`, { username, password });
+    return {
+      success: !!res.data?.success,
+      firstLogin: !!res.data?.firstLogin,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.response?.data?.error || err?.message || "Login failed",
+    };
+  }
 }
 
 export async function saveAdminLogin(username: string, password: string) {
@@ -84,9 +95,7 @@ export async function setGlobalPhone(phone: string) {
 
 export async function getDeletePasswordStatus(): Promise<{ isSet: boolean }> {
   const res = await api.get(`/api/admin/deletePassword/status`);
-  return {
-    isSet: !!res.data?.isSet,
-  };
+  return { isSet: !!res.data?.isSet };
 }
 
 export async function verifyDeletePassword(password: string): Promise<{
@@ -109,11 +118,7 @@ export async function changeDeletePassword(currentPassword: string, newPassword:
   message?: string;
   error?: string;
 }> {
-  const res = await api.post(`/api/admin/deletePassword/change`, {
-    currentPassword,
-    newPassword,
-  });
-
+  const res = await api.post(`/api/admin/deletePassword/change`, { currentPassword, newPassword });
   return {
     success: !!res.data?.success,
     message: res.data?.message,
@@ -125,65 +130,34 @@ export async function changeDeletePassword(currentPassword: string, newPassword:
    ADMIN SESSIONS
    ═══════════════════════════════════════════ */
 
-/**
- * Create admin session — sends unique sessionId + userAgent.
- * Each browser tab login = separate session row in DB.
- */
 export async function createAdminSession(admin: string, deviceId: string) {
   const sessionId = getOrCreateSessionId();
   const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
-
-  const res = await api.post(`/api/admin/session/create`, {
-    admin,
-    deviceId,
-    sessionId,
-    userAgent,
-  });
-
+  const res = await api.post(`/api/admin/session/create`, { admin, deviceId, sessionId, userAgent });
   return res.data;
 }
 
-/**
- * Ping session — keeps lastSeen fresh.
- */
 export async function pingAdminSession(admin: string, deviceId: string) {
   const sessionId = getOrCreateSessionId();
-
-  const res = await api.post(`/api/admin/session/ping`, {
-    admin,
-    deviceId,
-    sessionId,
-  });
+  const res = await api.post(`/api/admin/session/ping`, { admin, deviceId, sessionId });
   return res.data;
 }
 
-/**
- * List all sessions.
- */
 export async function listSessions(): Promise<AdminSessionDoc[]> {
   const res = await api.get(`/api/admin/sessions`);
   return Array.isArray(res.data) ? res.data : [];
 }
 
-/**
- * Logout specific session by sessionId.
- */
 export async function logoutSession(sessionId: string) {
   const res = await api.delete(`/api/admin/sessions/by-session/${encodeURIComponent(sessionId)}`);
   return res.data;
 }
 
-/**
- * Logout all sessions for a deviceId (backward compatible).
- */
 export async function logoutDevice(deviceId: string) {
   const res = await api.delete(`/api/admin/sessions/${encodeURIComponent(deviceId)}`);
   return res.data;
 }
 
-/**
- * Logout ALL sessions.
- */
 export async function logoutAll() {
   const res = await api.delete(`/api/admin/sessions`);
   return res.data;
