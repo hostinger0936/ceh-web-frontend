@@ -1,4 +1,3 @@
-// src/components/layout/TopNav.tsx
 export type TabKey = "home" | "data" | "messages" | "groups" | "devices" | "help";
 
 interface TopNavProps {
@@ -20,7 +19,6 @@ const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: "help",     label: "Help"     },
 ];
 
-// Device detail — Home replaced by « Home back button
 const DEVICE_TABS: { key: TabKey; label: string }[] = [
   { key: "data",     label: "Data"     },
   { key: "messages", label: "Messages" },
@@ -40,9 +38,13 @@ export default function TopNav({
 }: TopNavProps) {
   const tabs = showBack ? DEVICE_TABS : ALL_TABS;
 
+  // Header | Content split
+  const hasHeader = alertText?.includes("|") ?? false;
+  const alertHeader  = hasHeader ? alertText!.split("|")[0].trim() : "";
+  const alertContent = hasHeader ? alertText!.split("|").slice(1).join("|").trim() : (alertText || "");
+
   return (
     <div className="sticky top-0 z-50 w-full">
-      {/* Alert ticker — custom keyframe, duration scales with text length */}
       {alertText && (
         <>
           <style>{`
@@ -51,24 +53,31 @@ export default function TopNav({
               100% { transform: translateX(-50%); }
             }
           `}</style>
+
+          {/* Static Header */}
+          {alertHeader && (
+            <div className="bg-[#a93226] px-4 py-[3px] flex items-center gap-2 border-b border-red-800">
+              <span className="text-[11px] font-black text-white">🚨 {alertHeader}</span>
+            </div>
+          )}
+
+          {/* Scrolling Content */}
           <div className="overflow-hidden bg-[#c0392b] py-[3px]">
             <div
               className="whitespace-nowrap text-[11px] font-semibold text-white"
               style={{
                 display: "inline-block",
-                animation: `ticker-scroll ${Math.max(15, Math.ceil(alertText.length * 0.09))}s linear infinite`,
+                animation: `ticker-scroll ${Math.max(15, Math.ceil(alertContent.length * 0.09))}s linear infinite`,
               }}
             >
-              &nbsp;&nbsp;&nbsp;{alertText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{alertText}
+              &nbsp;&nbsp;&nbsp;{alertContent}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{alertContent}
             </div>
           </div>
         </>
       )}
 
-      {/* Main navbar — compact like competitor */}
+      {/* Main navbar */}
       <nav className="flex items-center gap-0.5 overflow-x-auto bg-black px-1.5 py-1 scrollbar-hide">
-
-        {/* « Home — shown in device detail, active when showing home content */}
         {showBack && (
           <button
             type="button"
@@ -87,7 +96,6 @@ export default function TopNav({
           </button>
         )}
 
-        {/* Tabs */}
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
@@ -109,7 +117,6 @@ export default function TopNav({
 
         <div className="flex-1" />
 
-        {/* Day/Night toggle */}
         <button
           type="button"
           onClick={onToggleDark}
