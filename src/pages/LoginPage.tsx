@@ -96,6 +96,13 @@ export default function LoginPage() {
     const username = storedUser || "admin";
     setSaving(true);
     try {
+      // ✅ Fresh login — purana session clear karo
+      try {
+        localStorage.removeItem("zerotrace_session_id");
+        localStorage.removeItem("zerotrace_session_created");
+        localStorage.removeItem("zerotrace_logged_in");
+        localStorage.removeItem("zerotrace_username");
+      } catch {}
       // ✅ Server side verify — bcrypt + rate limiting
       const result = await verifyAdminLogin(username, p);
       if (!result.success) {
