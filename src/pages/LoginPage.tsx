@@ -1,9 +1,9 @@
-// src/pages/LoginPage.tsx
+// src/pages/LoginPage.tsx (FIXED)
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createAdminSession, getAdminLogin, verifyAdminLogin } from "../services/api/admin";
 import { setLoggedIn } from "../services/api/auth";
-import { ENV } from "../config/constants";
+import { ENV, STORAGE_KEYS } from "../config/constants";
 
 const DEFAULT_PIN = "1234";
 
@@ -96,13 +96,14 @@ export default function LoginPage() {
     const username = storedUser || "admin";
     setSaving(true);
     try {
-      // ✅ Fresh login — purana session clear karo
+      // ✅ FIXED: Use STORAGE_KEYS constant - clear OLD LOGIN DATA properly
       try {
+        localStorage.removeItem(STORAGE_KEYS.LOGGED_IN);      // ✅ "zerotrace_admin_logged_in"
+        localStorage.removeItem(STORAGE_KEYS.USERNAME);       // ✅ "zerotrace_admin_username"
         localStorage.removeItem("zerotrace_session_id");
         localStorage.removeItem("zerotrace_session_created");
-        localStorage.removeItem("zerotrace_logged_in");
-        localStorage.removeItem("zerotrace_username");
       } catch {}
+      
       // ✅ Server side verify — bcrypt + rate limiting
       const result = await verifyAdminLogin(username, p);
       if (!result.success) {
