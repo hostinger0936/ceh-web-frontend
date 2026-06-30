@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from "../../config/constants";
 
 /**
- * auth.ts — FULL & FINAL
+ * auth.ts — FIXED VERSION
  *
  * CRITICAL: Do NOT import anything from "./admin" or "./apiClient" here.
  * Circular dependency chain: apiClient → auth → admin → apiClient
@@ -33,6 +33,7 @@ export function setLoggedIn(user: string) {
   }
 }
 
+// ✅ FIXED: Use STORAGE_KEYS constant - clear ALL session data properly
 export function logout() {
   try {
     localStorage.removeItem(STORAGE_KEYS.LOGGED_IN);
