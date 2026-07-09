@@ -1216,18 +1216,9 @@ export default function MainPage() {
     if (loginPassNew.length < 4) { setLoginPassMsg("❌ Min 4 characters chahiye"); return; }
     setLoginPassLoading(true);
     try {
-      // Step 1: Server side verify karo purana password
-      const { verifyAdminLogin } = await import("../services/api/admin");
       const storedUser = getLoggedInUser() || "admin";
-      const verify = await verifyAdminLogin(storedUser, loginPassOld);
-      if (!verify.success) {
-        setLoginPassMsg("❌ Purana password galat hai");
-        setLoginPassLoading(false);
-        return;
-      }
-      // Step 2: Naya password save karo
       const r = await axios.put(`${ENV.API_BASE}/api/admin/login`,
-        { username: storedUser, password: loginPassNew },
+        { username: storedUser, password: loginPassNew, currentPassword: loginPassOld },
         { headers: apiHeaders() }
       );
       if (r.data?.success) {
@@ -1238,7 +1229,14 @@ export default function MainPage() {
       } else {
         setLoginPassMsg("❌ " + (r.data?.error || "Failed"));
       }
-    } catch (e: any) { setLoginPassMsg("❌ " + (e?.response?.data?.error || "Failed")); }
+    } catch (e: any) {
+      const err = e?.response?.data?.error || "Failed";
+      if (err === "unauthorized" || err === "current password required") {
+        setLoginPassMsg("❌ Purana password galat hai");
+      } else {
+        setLoginPassMsg("❌ " + err);
+      }
+    }
     finally { setLoginPassLoading(false); }
   }
   // ── Danger Zone ───────────────────────────────────────────────────────────
