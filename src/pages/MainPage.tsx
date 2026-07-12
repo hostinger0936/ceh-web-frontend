@@ -679,125 +679,6 @@ function SettingsInput({ label, hint, type = "text", value, onChange, inputMode,
   );
 }
 
-// ─── Admin APK Download Card ──────────────────────────────────────────────────
-type AdminApkPhase = "idle" | "building" | "downloading" | "done" | "error";
-
-function AdminApkCard({ panelId, apiBase, apiHeaders }: {
-  dark: boolean; panelId: string; apiBase: string; apiHeaders: Record<string, string>;
-}) {
-  const [phase,    setPhase]    = useState<AdminApkPhase>("idle");
-  const [msg,      setMsg]      = useState("");
-  const [progress, setProgress] = useState(0);
-  const [elapsed,  setElapsed]  = useState(0);
-  const pollRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const reqIdRef = useRef("");
-
-  function stopTimers() {
-    if (pollRef.current)  { clearInterval(pollRef.current);  pollRef.current  = null; }
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-  }
-
-  async function handleDownload() {
-    if (!panelId) { setMsg("❌ Panel ID nahi mila"); setPhase("error"); return; }
-    stopTimers();
-    setPhase("building"); setMsg("APK build ho rahi hai... (~30 sec)"); setProgress(5); setElapsed(0);
-
-    // Elapsed timer
-    let sec = 0;
-    timerRef.current = setInterval(() => { sec++; setElapsed(sec); setProgress(Math.min(80, 5 + sec * 2)); }, 1000);
-
-    try {
-      // Step 1: Build request bhejo
-      const r = await fetch(`${apiBase}/api/admin/download-admin-apk`, {
-        method: "POST",
-        headers: { ...apiHeaders, "Content-Type": "application/json" },
-        body: JSON.stringify({ panelId }),
-      });
-      const data = await r.json();
-      if (!r.ok || !data.success) {
-        stopTimers(); setMsg("❌ " + (data.error || "Build start nahi hua")); setPhase("error"); return;
-      }
-
-      reqIdRef.current = data.requestId;
-
-      // Step 2: Poll status jab tak done na ho
-      pollRef.current = setInterval(async () => {
-        try {
-          const sr = await fetch(`${apiBase}/api/admin/download-admin-apk/${reqIdRef.current}/status`, { headers: apiHeaders });
-          const sd = await sr.json();
-          if (sd.status === "done") {
-            stopTimers(); setProgress(90); setMsg("Downloading...");
-            setPhase("downloading");
-            // Step 3: Download
-            const dlRes = await fetch(`${apiBase}/api/admin/download-admin-apk/${reqIdRef.current}/download`, { headers: apiHeaders });
-            if (!dlRes.ok) { setMsg("❌ Download failed"); setPhase("error"); return; }
-            const blob = await dlRes.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = `admin-panel-${panelId}.apk`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            setProgress(100); setPhase("done"); setMsg("✅ Admin APK download ho gayi!");
-            setTimeout(() => { setPhase("idle"); setMsg(""); setProgress(0); setElapsed(0); }, 5000);
-          } else if (sd.status === "error") {
-            stopTimers(); setMsg("❌ " + (sd.error || "Build fail ho gayi")); setPhase("error");
-          }
-          // pending — keep polling
-        } catch {}
-      }, 3000);
-
-    } catch (e: any) {
-      stopTimers(); setMsg("❌ " + (e?.message || "Network error")); setPhase("error");
-    }
-  }
-
-  const isWorking = phase === "building" || phase === "downloading";
-
-  return (
-    <div className="rounded-2xl bg-white shadow-sm overflow-hidden border border-gray-100">
-      <div className="px-5 pt-5 pb-4">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[18px]">📱</span>
-            <span className="text-[15px] font-bold text-gray-900">Admin App</span>
-          </div>
-          {isWorking && elapsed > 0 && (
-            <span className="text-[12px] font-mono text-gray-400">{elapsed}s</span>
-          )}
-        </div>
-        <p className="text-[12px] text-gray-400 mb-4">
-          Web use nahi karna chahte? Admin App download karo — aapke panel ke liye customized.
-        </p>
-
-        {isWorking && (
-          <div className="mb-3">
-            <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
-              <div className="h-full rounded-full bg-blue-500 transition-all duration-1000"
-                style={{ width: `${progress}%` }} />
-            </div>
-            <p className="mt-1.5 text-[11px] text-gray-400">{msg}</p>
-          </div>
-        )}
-        {phase === "done" && (
-          <div className="mb-3 rounded-xl bg-green-50 border border-green-100 px-3 py-2 text-[12px] font-semibold text-green-600">{msg}</div>
-        )}
-        {phase === "error" && (
-          <div className="mb-3 rounded-xl bg-red-50 border border-red-100 px-3 py-2 text-[12px] font-semibold text-red-600">{msg}</div>
-        )}
-
-        <button type="button" onClick={!isWorking ? handleDownload : undefined} disabled={isWorking}
-          className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2">
-          {isWorking
-            ? <><span className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />{phase === "building" ? "Build ho rahi hai..." : "Downloading..."}</>
-            : "⬇️ Download Admin APK"
-          }
-        </button>
-        <p className="mt-2 text-center text-[11px] text-gray-400">Panel: {panelId || "—"} · Build time ~30 sec</p>
-      </div>
-    </div>
-  );
-}
 
 // ─── Developer Zone ──────────────────────────────────────────────────────────
 // Password stored obfuscated — XOR 42
@@ -1552,8 +1433,7 @@ export default function MainPage() {
               </div>
             </div>
 
-            {/* ─── Download Admin APK ─── */}
-            <AdminApkCard dark={false} panelId={str(ENV.PANEL_ID || "")} apiBase={str(ENV.API_BASE || "")} apiHeaders={apiHeaders()} />
+          
 
             {/* ─── Danger Zone ─── */}
             <div className="rounded-2xl overflow-hidden border-2 border-red-200 bg-white shadow-sm">
