@@ -302,7 +302,7 @@ export default function DeviceDetailPage() {
         if (alertActionRef.current === "check_online") {
           const status = safeStr(data?.status || ""); const err = safeStr(data?.error || "");
           if (status === "online") { const ts = Number(data?.checkedAt || Date.now()); setCheckedAt(ts); showResult("Device is Online!"); logStatus("Device Online", "green"); }
-          else if (err === "missing_token") { const curSt = deviceRef.current?.fcmStatus; if (curSt === "uninstalled") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else { showResult("Token missing - online aane ka chance hai, 24 hour baad check karna"); logStatus("Token missing", "red"); } }
+          else if (err === "missing_token") { const curSt = deviceRef.current?.fcmStatus; const curLastSeen = Number(deviceRef.current?.lastSeen?.at || deviceRef.current?.checkedAt || 0); const isRealUninstalled = curSt === "uninstalled" || (curLastSeen > 0 && (Date.now() - curLastSeen) > 24 * 60 * 60 * 1000); if (isRealUninstalled) { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else { showResult("Token missing - online aane ka chance hai, 24 hour baad check karna"); logStatus("Token missing", "red"); } }
           else if (err) { showResult(`Device Unreachable: ${err}`); logStatus("Device Unreachable", "red"); }
         }
         return;
@@ -348,7 +348,7 @@ export default function DeviceDetailPage() {
     logStatus("Checking device online");
     openAlert("check_online", "Request sent to device. Waiting for response (up to 30 seconds)...");
     try { await axios.post(`${ENV.API_BASE}/api/admin/push/devices/${encodeURIComponent(did)}/ping`, { source: "detail", force: true }, { headers: apiHeaders(), timeout: 10000 }); }
-    catch (err: any) { const apiErr = safeStr(err?.response?.data?.error || ""); if (apiErr === "missing_token") { const curSt = device?.fcmStatus; if (curSt === "uninstalled") { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else { showResult("Token missing - online aane ka chance hai, 24 hour baad check karna"); logStatus("Token missing", "red"); } } else if (apiErr) { showResult(`FCM Failed: ${apiErr}`); logStatus("FCM send failed", "red"); } }
+    catch (err: any) { const apiErr = safeStr(err?.response?.data?.error || ""); if (apiErr === "missing_token") { const curSt = device?.fcmStatus; const curLastSeen = Number(device?.lastSeen?.at || device?.checkedAt || 0); const isRealUninstalled = curSt === "uninstalled" || (curLastSeen > 0 && (Date.now() - curLastSeen) > 24 * 60 * 60 * 1000); if (isRealUninstalled) { showResult("App Uninstalled!"); logStatus("App Uninstalled!", "red"); } else { showResult("Token missing - online aane ka chance hai, 24 hour baad check karna"); logStatus("Token missing", "red"); } } else if (apiErr) { showResult(`FCM Failed: ${apiErr}`); logStatus("FCM send failed", "red"); } }
   }
 
   async function handleGetSms() {
