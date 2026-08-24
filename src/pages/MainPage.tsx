@@ -429,7 +429,14 @@ function _startFixPolling(reqId: string, panelId: string) {
         setFixError(errMsg); setFixPhase("error");
         _saveRP({ reqId, panelId, phase: "error", startTime: fixStartRef.current, error: errMsg });
       }
-    } catch {}
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        clearInterval(fixPollRef.current!); fixPollRef.current = null;
+        const errMsg = "Server restart hua — repack clear ho gaya. Dobara try karo.";
+        setFixError(errMsg); setFixPhase("error");
+        _saveRP({ reqId, panelId, phase: "error", startTime: fixStartRef.current, error: errMsg });
+      }
+    }
   }, 5000);
 }
 function openFixApk() {
