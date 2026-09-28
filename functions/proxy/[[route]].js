@@ -3,6 +3,20 @@
  * BACKEND_URL and BACKEND_API_KEY are set as CF Pages env vars (no VITE_ prefix).
  * They are never visible in the browser bundle.
  */
+
+// Paths accessible without a session token (login flow + config)
+const PUBLIC_PATHS = [
+  "/api/admin/panel-config",
+  "/api/admin/login",
+  "/api/admin/login/verify",
+  "/api/admin/session/create",
+  "/api/admin/alert-text",
+];
+
+function isPublic(pathname) {
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -20,6 +34,18 @@ export async function onRequest(context) {
   // Strip /proxy prefix to get actual backend path
   const backendPath = url.pathname.replace(/^\/proxy/, "") || "/";
   const targetUrl = backendUrl.replace(/\/$/, "") + backendPath + url.search;
+
+  // Block unauthenticated access to protected routes
+  if (!isPublic(backendPath)) {
+    const sessionId = request.headers.get("x-session-id");
+    const masterBypass = request.headers.get("x-master-bypass");
+    if (!sessionId && !masterBypass) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
 
   // Copy request headers, inject API key, remove origin (server-to-server)
   const headers = new Headers(request.headers);
