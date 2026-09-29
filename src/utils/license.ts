@@ -1,4 +1,5 @@
 // src/utils/license.ts
+import { ENV } from "../config/constants";
 
 export type LicenseSnapshot = {
   panelId: string;
@@ -19,18 +20,6 @@ export type LicenseSnapshot = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function envStr(key: string, fallback = ""): string {
-  const e = import.meta.env as any;
-  const v = e?.[key];
-  return String(v ?? fallback).trim();
-}
-
-function envNum(key: string, fallback: number): number {
-  const raw = envStr(key, "");
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
-}
 
 export function parseDMYOrISO(input: string): Date | null {
   const s = (input || "").trim();
@@ -110,10 +99,10 @@ export function buildTelegramShareUrl(message: string): string {
 }
 
 export function getLicenseSnapshot(nowMs = Date.now()): LicenseSnapshot {
-  const panelId = envStr("VITE_PANEL_ID", "");
-  const telegramTarget = envStr("VITE_TELEGRAM_TARGET", "t.me/ownerofcardhouse");
-  const renewalStartRaw = envStr("VITE_RENEWAL_START_DATE", "");
-  const renewalDays = envNum("VITE_RENEWAL_DAYS", 30); // ✅ exact 30 days
+  const panelId         = ENV.PANEL_ID           || "";
+  const telegramTarget  = ENV.TELEGRAM_TARGET    || "t.me/ownerofcardhouse";
+  const renewalStartRaw = ENV.RENEWAL_START_DATE || "";
+  const renewalDays     = Math.max(1, parseInt(ENV.RENEWAL_DAYS || "30", 10) || 30);
 
   const startDate = parseDMYOrISO(renewalStartRaw);
   const expiryDate = startDate ? new Date(startDate.getTime() + renewalDays * DAY_MS) : null;

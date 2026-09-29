@@ -1,3 +1,5 @@
+import { ENV } from "../../config/constants";
+
 type WsMessage = {
   type?: string;
   event?: string;
@@ -27,9 +29,11 @@ class WsService {
   private readonly pingIntervalMs = 15000;
 
   private getBaseWsUrl(): string {
-    const envUrl = String(import.meta.env.VITE_WS_URL || "").trim();
-    if (envUrl) return envUrl.replace(/\/+$/, "");
+    // Read from runtime config (set from /proxy/api/admin/panel-config at startup)
+    const runtimeUrl = String(ENV.WS_URL || "").trim();
+    if (runtimeUrl) return runtimeUrl.replace(/\/+$/, "");
 
+    // Fallback: same host (works for local dev)
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     return `${protocol}://${window.location.host}/ws`;
   }
