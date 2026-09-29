@@ -1,6 +1,5 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
-import { ENV, getApiKey } from "../../config/constants";
 import { getLoggedInUser, isLoggedIn, logout } from "./auth";
 
 function getOrCreateWebDeviceId(): string {
@@ -30,7 +29,7 @@ function getSessionId(): string {
 
 function createClient(): AxiosInstance {
   const client = axios.create({
-    baseURL: ENV.API_BASE,
+    baseURL: "/proxy",   // CF Worker proxy — no sensitive URL in bundle
     timeout: 15000,
     headers: {
       "Content-Type": "application/json",
@@ -38,11 +37,7 @@ function createClient(): AxiosInstance {
   });
 
   client.interceptors.request.use((config) => {
-    const key = getApiKey();
-    if (key) {
-      config.headers = config.headers || {};
-      (config.headers as any)["x-api-key"] = key;
-    }
+    // x-api-key NOT injected here — CF Worker adds it server-side
     try {
       if (isLoggedIn()) {
         const admin = getLoggedInUser();
