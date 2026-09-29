@@ -1,3 +1,4 @@
+// build:2026-09-29
 /**
  * CF Pages Function — proxy all /proxy/* requests to the backend.
  * BACKEND_URL and BACKEND_API_KEY are set as CF Pages env vars (no VITE_ prefix).

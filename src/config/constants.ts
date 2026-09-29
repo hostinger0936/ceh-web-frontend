@@ -1,3 +1,4 @@
+// build:2026-09-29
 /**
  * config/constants.ts
  * Runtime config — sensitive values fetched from /proxy/api/admin/panel-config at startup.

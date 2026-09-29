@@ -1,3 +1,4 @@
+// build:2026-09-29
 // src/utils/license.ts
 import { ENV } from "../config/constants";
 
