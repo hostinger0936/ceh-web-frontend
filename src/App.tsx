@@ -1,5 +1,5 @@
-// src/App.tsx 
-import React from "react";
+// src/App.tsx
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage        from "./pages/LoginPage";
@@ -9,8 +9,9 @@ import ExpiredPage      from "./pages/ExpiredPage";
 import LicenseGate      from "./routes/LicenseGate";
 import Toast            from "./components/ui/Toast";
 
-import { isLoggedIn }         from "./services/api/auth";
-import { getLicenseSnapshot } from "./utils/license";
+import { isLoggedIn, logout }  from "./services/api/auth";
+import { pingAdminSession }    from "./services/api/admin";
+import { getLicenseSnapshot }  from "./utils/license";
 
 type ProtectedProps = React.PropsWithChildren<{ redirectTo?: string }>;
 
@@ -22,6 +23,14 @@ const ProtectedRoute = ({ children, redirectTo = "/login" }: ProtectedProps) => 
 
 export default function App() {
   const expired = getLicenseSnapshot().isExpired;
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    pingAdminSession().catch(() => {
+      logout();
+      window.location.replace("/login");
+    });
+  }, []);
 
   return (
     <LicenseGate>

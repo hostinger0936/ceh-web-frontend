@@ -1,4 +1,3 @@
-// build:2026-09-29
 /**
  * config/constants.ts
  * Runtime config — sensitive values fetched from /proxy/api/admin/panel-config at startup.
@@ -48,5 +47,10 @@ export function setRuntimeConfig(cfg: Record<string, any>) {
 export function getApiKey(): string { return ""; }
 
 export function apiHeaders(extra: Record<string, any> = {}): Record<string, any> {
-  return { ...extra };
+  const headers: Record<string, any> = { ...extra };
+  try {
+    const sessionId = localStorage.getItem("zerotrace_session_id");
+    if (sessionId) headers["x-session-id"] = sessionId;
+  } catch {}
+  return headers;
 }
